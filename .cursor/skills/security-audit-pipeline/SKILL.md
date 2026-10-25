@@ -60,6 +60,13 @@ humano. No se salta ninguna fase y no se escribe código hasta la Fase 3.
 - Cada hallazgo conserva su ID (`V-NN`, `N-NN`, `W-NN`) entre fases.
 - Al terminar la última fase se cierra todo: no quedan contenedores, redes,
   volúmenes ni artefactos temporales de PoC.
+- **Cierre y alcance.** El análisis está listo cuando se cumplen las 7
+  condiciones de `PIPELINE_ORCHESTRATOR.md` (IDs con estado final, remediación
+  re-verificada, suite verde, dependencias escaneadas, `teardown: OK`, estado
+  persistido y repo limpio). Si el usuario dice que está listo, se cierra: no se
+  reabren fases, no se convierten observaciones en tareas, no se aplican cambios
+  "de paso" ni se proponen "próximos pasos". Ampliar alcance exige petición
+  explícita, registro en `PIPELINE_STATUS.md` y un gate nuevo.
 
 ## Salida
 

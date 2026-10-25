@@ -66,6 +66,65 @@ entre fases. Ninguna fase se salta y ninguna fase escribe fuera de su autoridad.
    reportes.
 5. **Gate:** sin este paso el pipeline queda `blocked`; nunca `done`.
 
+## 🔒 Regla de cierre y control de alcance
+
+Un análisis termina cuando se cumplen **todas** las condiciones de cierre. No
+existe un "casi listo": o se cumplen, o el pipeline queda `blocked`.
+
+### Condiciones de cierre verificables
+
+| # | Condición | Verificación |
+|---|-----------|--------------|
+| 1 | Todos los IDs del alcance tienen estado final | `AUDIT_REPORT.md`: cada `V-NN`/`N-NN`/`W-NN` en `Mitigado`, `Aceptado` o `Falso positivo`; ninguno en `Pendiente` |
+| 2 | Remediación re-verificada | `REMEDIATION_SUMMARY.md`: cada ID en `Cerrado`, `Parcial` o `Reabierto` con PoC o test re-ejecutado |
+| 3 | Suite verde | `make check` (o el equivalente del proyecto) sin fallos ni tests omitidos |
+| 4 | Dependencias escaneadas | `DEPENDENCY_SCAN.md` con fecha, herramienta y versión; 0 críticas o cada una justificada |
+| 5 | Entorno destruido | `teardown.sh` imprime `teardown: OK`; 0 contenedores, 0 redes y 0 volúmenes del proyecto |
+| 6 | Estado persistido | `PIPELINE_STATUS.md` con todas las filas en `done` o `skipped` con motivo |
+| 7 | Repo limpio | `git status` sin cambios sin commitear y sin artefactos temporales de PoC |
+
+Si una condición falla, el estado es `blocked` y se reporta la condición
+concreta. No se declara `done` por aproximación.
+
+### Prohibiciones al cerrar
+
+- **No reabrir fases cerradas** sin un hallazgo nuevo reproducible y aprobación
+  explícita. "Revisar por si acaso" no es un motivo.
+- **No convertir observaciones en tareas.** Una nota, un falso positivo o un
+  riesgo residual se documenta en el informe; no genera un TODO, un issue ni una
+  fase nueva.
+- **No aplicar cambios "de paso"** (refactors, renombres, estilo, bumps no
+  relacionados) después de declarar el cierre. El alcance es el aprobado.
+- **No proponer trabajo futuro como parte de la entrega.** Lo que quede fuera se
+  registra como `Riesgo residual` o `Fuera de alcance` y se para ahí; no se
+  presenta como "siguiente paso" ni como pregunta abierta.
+- **No re-ejecutar el pipeline** para "confirmar" lo ya confirmado: la evidencia
+  ya está en los reportes.
+
+### Ampliación de alcance (excepción)
+
+Solo si el usuario lo pide de forma explícita:
+
+1. Registrar en `PIPELINE_STATUS.md` la petición, la fecha y el motivo.
+2. Abrir un gate nuevo; sin aprobación, no se ejecuta.
+3. Volver a la fase correspondiente y poner esa fila en `running`.
+4. Al terminar, repetir las condiciones 1–7.
+
+Un hallazgo nuevo descubierto durante el cierre **no** amplía el alcance por sí
+solo: se documenta y se espera decisión.
+
+### Formato de respuesta al cerrar
+
+```text
+Estado: done | blocked
+Alcance: <IDs cubiertos>
+Evidencia: <rutas a reportes + comando de verificación>
+Cierre: teardown: OK (0 contenedores / 0 redes / 0 volúmenes)
+Fuera de alcance: <nada | lista>
+```
+
+Sin secciones de "próximos pasos" ni preguntas que impliquen trabajo nuevo.
+
 ## 🛑 Reglas de Parada
 
 - Objetivo fuera de `sandbox_net` o IP pública resuelta ➔ detener y registrar.

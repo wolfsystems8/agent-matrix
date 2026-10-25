@@ -406,6 +406,43 @@ class TestSandboxHardening(unittest.TestCase):
             self.assertIn("teardown.sh", text, path)
             self.assertIn("teardown: OK", text, path)
 
+    def test_pipeline_defines_closure_and_scope_rule(self) -> None:
+        pipeline = (ROOT / "core/pipeline/PIPELINE_ORCHESTRATOR.md").read_text(encoding="utf-8")
+        self.assertIn("Regla de cierre y control de alcance", pipeline)
+        # Condiciones verificables: las 7 numeradas en la tabla.
+        for condition in (
+            "Todos los IDs del alcance tienen estado final",
+            "Remediación re-verificada",
+            "Suite verde",
+            "Dependencias escaneadas",
+            "Entorno destruido",
+            "Estado persistido",
+            "Repo limpio",
+        ):
+            self.assertIn(condition, pipeline, condition)
+        # Prohibiciones explícitas al cerrar.
+        for ban in (
+            "No reabrir fases cerradas",
+            "No convertir observaciones en tareas",
+            'No aplicar cambios "de paso"',
+            "No proponer trabajo futuro",
+            "No re-ejecutar el pipeline",
+        ):
+            self.assertIn(ban, pipeline, ban)
+        # La ampliación de alcance exige gate y registro.
+        self.assertIn("Ampliación de alcance (excepción)", pipeline)
+        self.assertIn("Abrir un gate nuevo", pipeline)
+        self.assertIn("Estado: done | blocked", pipeline)
+
+        skill = (ROOT / "core/skills/security-audit-pipeline/SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("Cierre y alcance", skill)
+        self.assertIn("PIPELINE_ORCHESTRATOR.md", skill)
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn("Cierre y alcance", agents)
+        self.assertIn("Un análisis terminado no genera trabajo nuevo", agents)
+
 
 if __name__ == "__main__":
     unittest.main()

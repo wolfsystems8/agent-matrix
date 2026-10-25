@@ -58,3 +58,11 @@ make doctor     # comprueba docker/git/adaptadores
 - `git status` limpio después de `build` (adaptadores incluidos).
 - Documentación actualizada.
 - Sin secretos, PII ni rutas de máquina en el diff.
+- Cierre y alcance: se cumplen las 7 condiciones de
+  `core/pipeline/PIPELINE_ORCHESTRATOR.md` (IDs con estado final, remediación
+  re-verificada, suite verde, dependencias escaneadas, `teardown: OK`, estado
+  persistido y repo limpio). Un análisis terminado no genera trabajo nuevo: no
+  se reabren fases, no se convierten observaciones en tareas, no se aplican
+  cambios "de paso" ni se proponen "próximos pasos". Ampliar alcance exige
+  petición explícita del usuario, registro en `PIPELINE_STATUS.md` y un gate
+  nuevo.
