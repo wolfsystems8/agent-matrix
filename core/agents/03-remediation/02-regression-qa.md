@@ -66,4 +66,5 @@ confirmar que las vulnerabilidades corregidas ya no son explotables.
 - No modifiques el código de la aplicación para "hacer pasar" un test; si el test
   era incorrecto, justifícalo y actualízalo con revisión.
 - Si no puedes ejecutar la suite, indícalo explícitamente; no asumas éxito.
-- Destruye el sandbox al terminar (`docker compose ... down -v`) y anótalo.
+- Cierra el sandbox al terminar con `sh {{CORE}}/sandbox/scripts/teardown.sh`
+  (exige `teardown: OK`) y anótalo en `reports/REMEDIATION_SUMMARY.md`.

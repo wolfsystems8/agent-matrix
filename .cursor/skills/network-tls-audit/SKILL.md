@@ -25,7 +25,8 @@ detalle de comandos y el formato de reporte están en el agente
 ## Workflow
 
 1. Resuelve hosts y subred desde `pentest-runner`; no salgas de `sandbox_net`.
-2. Escanea TCP completo (`nmap -sT -sV -p-`) y UDP más comunes.
+2. Escanea TCP completo (`nmap -sT -sV -p-`). UDP y los raw scans (`-sS`,
+   `-sU`) quedan fuera: el runner endurecido no corre como root.
 3. Identifica versiones/banners y servicios innecesarios u obsoletos.
 4. Audita TLS (`ssl-enum-ciphers`, `sslyze`, `openssl`): protocolos obsoletos,
    suites débiles, validez y cadena del certificado.

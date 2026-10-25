@@ -17,10 +17,12 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
@@ -496,9 +498,8 @@ def manifest_payload(files: dict[str, str], core_prefix: str, tools: Iterable[st
 
 
 def write_manifest(out: Path, payload: dict) -> None:
-    (out / MANIFEST_NAME).write_text(
-        json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
-    )
+    data = (json.dumps(payload, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
+    atomic_write(out / MANIFEST_NAME, data)
 
 
 def read_manifest(out: Path) -> dict | None:
@@ -550,18 +551,67 @@ def remove_empty_parents(path: Path, stop: Path) -> None:
         parent = parent.parent
 
 
+def confined(root: Path, target: Path) -> bool:
+    """True si el padre resuelto de ``target`` sigue dentro de ``root``.
+
+    Se resuelve solo el padre: el último componente puede ser un symlink y se
+    quiere tratar como entrada del directorio, no como su destino.
+    """
+    root = root.resolve()
+    parent = target.parent.resolve()
+    return parent == root or root in parent.parents
+
+
+def atomic_write(target: Path, data: bytes) -> None:
+    """Escribe ``data`` de forma atómica y sin seguir symlinks (V-05).
+
+    ``os.replace`` sustituye la entrada del directorio —el symlink— y no su
+    destino, así que un symlink plantado en el proyecto no redirige la
+    escritura fuera de él.
+    """
+    fd, raw = tempfile.mkstemp(
+        dir=target.parent, prefix=".secmatrix-", suffix=".tmp"
+    )
+    tmp = Path(raw)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp, target)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
+
+
+def find_symlink(root: Path) -> Path | None:
+    """Primer symlink bajo ``root`` (sin seguirlos)."""
+    for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
+        for name in dirnames + filenames:
+            candidate = Path(dirpath) / name
+            if candidate.is_symlink():
+                return candidate
+    return None
+
+
 def write_files(out: Path, files: dict[str, str], prune: bool = False) -> list[str]:
     written: list[str] = []
     previous = read_manifest(out) or {}
     previous_files = set((previous.get("files") or {}).keys())
 
     for path, content in sorted(files.items()):
-        target = out / path
-        target.parent.mkdir(parents=True, exist_ok=True)
-        data = content.encode("utf-8")
-        if target.exists() and target.read_bytes() == data:
+        target = safe_join(out, path)
+        if target is None or not confined(out, target):
+            print(f"WARN: ruta fuera del proyecto ignorada: {path}")
             continue
-        target.write_bytes(data)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if not confined(out, target):
+            print(f"WARN: ruta fuera del proyecto ignorada: {path}")
+            continue
+        data = content.encode("utf-8")
+        if target.is_file() and not target.is_symlink() and target.read_bytes() == data:
+            continue
+        atomic_write(target, data)
         written.append(path)
 
     if prune:
@@ -753,9 +803,19 @@ def cmd_install(args: argparse.Namespace) -> int:
         return 0
 
     # 1) Copiar la fuente canónica.
-    dest_core = target / ".sec-agent-matrix" / "core"
+    dest_root = target / ".sec-agent-matrix"
+    if dest_root.is_symlink():
+        fail(f"{dest_root} es un symlink; abortando para no escribir fuera del proyecto")
+    if dest_root.exists():
+        planted = find_symlink(dest_root)
+        if planted is not None:
+            fail(
+                "symlink en el destino de instalación: "
+                f"{planted.relative_to(target)} (elimínalo y reintenta)"
+            )
+    dest_core = dest_root / "core"
     shutil.copytree(ROOT / "core", dest_core, dirs_exist_ok=True)
-    shutil.copy2(ROOT / "VERSION", target / ".sec-agent-matrix" / "VERSION")
+    shutil.copy2(ROOT / "VERSION", dest_root / "VERSION")
 
     # 2) Generar adaptadores.
     written = write_files(target, files, prune=args.prune)

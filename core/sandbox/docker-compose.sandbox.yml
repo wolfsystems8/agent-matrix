@@ -29,6 +29,13 @@ services:
       - sandbox_net
     security_opt:
       - no-new-privileges:true
+    # V-07: sin capabilities, rootfs de solo lectura y sin usuario root
+    # (USER 10001 en el Dockerfile).
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
 
   # Docker no publica puertos de contenedores conectados solo a una red
   # interna, así que el borde se expone aquí. El objetivo sigue sin salida a
@@ -48,15 +55,32 @@ services:
       - sandbox_net
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
     restart: unless-stopped
 
   target-db:
-    image: postgres:15-alpine
+    # Digest fijado (V-06): el tag puede moverse, el digest no.
+    image: postgres:15-alpine@sha256:a8e042598834300dfaa17a54f695b87b7f25d3490433bbbe2ef3bffbb9747f24
     container_name: sandbox_target_db
     environment:
       - POSTGRES_DB=test_db
       - POSTGRES_USER=test_user
       - POSTGRES_PASSWORD=test_pass
+    # V-07: usuario `postgres` de la imagen (uid 70) y rootfs inmutable.
+    # El volumen hereda el propietario del directorio de la imagen.
+    user: "70:70"
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U test_user -d test_db"]
       interval: 5s
@@ -73,8 +97,10 @@ services:
       dockerfile: Dockerfile.pentest
     container_name: sandbox_pentester
     volumes:
-      - ./scripts:/scripts
-      - ${REPORTS_DIR:-../../reports}:/reports
+      # V-07: scripts y reportes de solo lectura; los informes los escribe el
+      # agente en el host, no el contenedor.
+      - ./scripts:/scripts:ro
+      - ${REPORTS_DIR:-../../reports}:/reports:ro
     depends_on:
       target-app:
         condition: service_started
@@ -86,8 +112,9 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    cap_add:
-      - NET_RAW   # necesario para descubrimiento y escaneos ICMP/SYN
+    read_only: true
+    tmpfs:
+      - /tmp
     command: tail -f /dev/null
 
 networks:
@@ -96,3 +123,6 @@ networks:
     internal: true # bloquea la salida a Internet; solo tráfico interno
   sandbox_edge:
     driver: bridge # solo para el proxy de borde; el objetivo no la usa
+
+volumes:
+  pgdata:

@@ -65,9 +65,10 @@ docker compose -f core/sandbox/docker-compose.sandbox.yml \
 docker compose -f core/sandbox/docker-compose.sandbox.yml exec -T pentest-runner \
   nmap -sT -sV -p- --min-rate 800 -T4 target-app
 
-# UDP más comunes
-docker compose -f core/sandbox/docker-compose.sandbox.yml exec -T pentest-runner \
-  nmap -sU --top-ports 50 --max-retries 1 target-app
+# UDP más comunes: requiere root. El runner endurecido corre sin privilegios
+# y con `no-new-privileges`, así que los raw scans (`-sS`, `-sU`) no están
+# disponibles. Verifica UDP con los puertos declarados en el compose o
+# documenta la limitación en NETWORK_AUDIT.md.
 ```
 
 Registra puerto, estado, servicio, versión/banner y si el servicio es necesario

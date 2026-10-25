@@ -215,17 +215,18 @@ docker network inspect sec-agent-matrix_sandbox_net --format '{{.Internal}}'   #
 docker compose -f core/sandbox/docker-compose.sandbox.yml \
   exec -T pentest-runner sh -lc '/scripts/smoke_test.sh'                      # EGRESS_BLOCKED
 
-# Destruir
-docker compose -f core/sandbox/docker-compose.sandbox.yml down -v
+# Destruir (stack, volúmenes y PoC temporales)
+sh core/sandbox/scripts/teardown.sh
 ```
 
 Para auditar una app propia, define `TARGET_CONTEXT` (y `TARGET_DOCKERFILE` /
 `TARGET_PORT` si aplica) en `core/sandbox/.env`: la app debe exponer `:8080`.
 
 Características: red `internal: true`, objetivo expuesto solo en `127.0.0.1` a
-través del proxy `target-edge` (socat), `no-new-privileges`, `cap_drop: ALL` +
-`NET_RAW` solo en el runner, y un `Dockerfile.pentest` con `nmap`, `sslyze`,
-`curl`, `openssl` y `nc`.
+través del proxy `target-edge` (socat), `no-new-privileges`, `cap_drop: ALL` en
+los cuatro servicios, rootfs de solo lectura, ningún servicio como root,
+imágenes fijadas por digest y un `Dockerfile.pentest` con `nmap`, `sslyze`,
+`curl`, `openssl` y `nc`. Los escaneos son sin privilegios (`-sT -sV -Pn`).
 
 Variables: `TARGET_CONTEXT` (default `./demo-target`), `TARGET_DOCKERFILE`,
 `TARGET_PORT`, `REPORTS_DIR`. Ver

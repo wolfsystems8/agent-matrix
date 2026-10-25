@@ -19,7 +19,8 @@ explícitamente prohibido por la [directiva ética](core/ethics/ETHICAL_DIRECTIV
 | Alcance | `reports/ENGAGEMENT_SCOPE.md` obligatorio antes de la Fase 2 |
 | Red | `sandbox_net` con `internal: true`; sin egreso a Internet |
 | Exposición | Puerto del objetivo solo en `127.0.0.1` |
-| Contenedores | `no-new-privileges`; `cap_drop: ALL` + `NET_RAW` en el runner |
+| Contenedores | `no-new-privileges`; `cap_drop: ALL`; sin root; rootfs de solo lectura |
+| Cierre | `scripts/teardown.sh` obligatorio al terminar cada fase y el pipeline |
 | Escritura | Fases 1 y 2 limitadas a `reports/` (OpenCode lo aplica por ruta) |
 | Destrucción | Prohibidos DoS, fuerza bruta, borrado y exfiltración |
 | Datos | Secretos y PII enmascarados en los reportes |

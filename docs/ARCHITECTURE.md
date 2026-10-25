@@ -135,7 +135,12 @@ mantiene la riqueza de cada host con una sola fuente.
 ## Seguridad del propio toolchain
 
 - Solo escribe dentro de `ROOT` (build/clean) o del `--target` indicado.
-- `install` rechaza instalar sobre el propio toolkit.
+- La escritura es atómica (`os.replace`) y no sigue symlinks: un enlace
+  plantado en el destino se sustituye, no se escribe a través de él.
+- `install` rechaza instalar sobre el propio toolkit y aborta si encuentra
+  symlinks en `.sec-agent-matrix`.
+- `clean` solo borra las rutas del manifiesto, validadas con `safe_join`.
 - No ejecuta código de los agentes; solo transforma Markdown/TOML.
 - No hace peticiones de red.
-- Los tests cubren conflictos, idempotencia y `--dry-run`.
+- Los tests cubren conflictos, idempotencia, `--dry-run`, symlinks y rutas que
+  escapan del proyecto.

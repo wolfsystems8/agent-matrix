@@ -13,6 +13,7 @@ entre fases. Ninguna fase se salta y ninguna fase escribe fuera de su autoridad.
 | 1 — SSDLC | `threat-modeler` → `sast-auditor` → `triage-master` | `THREAT_MODEL.md`, `SAST_RAW_FINDINGS.md`, `AUDIT_REPORT.md` | Solo lectura + `reports/` |
 | 2 — Pentest | `sandbox-manager` → `network-auditor` → `web-dast-tester` → `exploit-tester` | `SANDBOX_STATUS.md`, `NETWORK_AUDIT.md`, `WEB_DAST_REPORT.md`, `PENTEST_VERIFICATION.md` | Solo lectura + `reports/` + scripts de sandbox |
 | 3 — Remediación | `secfix-patcher` → `regression-qa` | Código parcheado, `REMEDIATION_SUMMARY.md` | Escritura de código |
+| Cierre | orchestrator | `PIPELINE_STATUS.md` actualizado, entorno destruido | Solo lectura + `reports/` |
 
 ## 🔄 Flujo de Trabajo Secuencial
 
@@ -53,6 +54,17 @@ entre fases. Ninguna fase se salta y ninguna fase escribe fuera de su autoridad.
    las PoCs ➔ emite `reports/REMEDIATION_SUMMARY.md`.
 3. Si una PoC sigue pasando, reabrir el hallazgo y volver al paso 1 (máximo 3
    iteraciones antes de escalar al usuario).
+
+### FASE FINAL: Cierre del entorno (obligatoria)
+
+1. Ejecutar `sh core/sandbox/scripts/teardown.sh` desde el host.
+2. Exigir la línea `teardown: OK`: sin contenedores, redes ni volúmenes del
+   proyecto, y sin contenedores/imágenes temporales `secmatrix-poc-*`.
+3. Borrar los artefactos temporales de PoC que no gestione el script
+   (`/tmp/opencode/*`, copias parcheadas, imágenes ad hoc).
+4. Actualizar `reports/PIPELINE_STATUS.md` con el cierre y las rutas de los
+   reportes.
+5. **Gate:** sin este paso el pipeline queda `blocked`; nunca `done`.
 
 ## 🛑 Reglas de Parada
 

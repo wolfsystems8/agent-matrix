@@ -46,8 +46,10 @@ humano. No se salta ninguna fase y no se escribe código hasta la Fase 3.
    - Delega en `secfix-patcher` con los IDs confirmados.
    - Delega en `regression-qa` → `reports/REMEDIATION_SUMMARY.md`.
    - Si hay hallazgos reabiertos, repite hasta 3 veces; luego escala.
-5. **Cierre.** Destruye el sandbox, actualiza `PIPELINE_STATUS.md` y entrega un
-   resumen con rutas a los reportes.
+5. **Cierre obligatorio.** Ejecuta `sh {{CORE}}/sandbox/scripts/teardown.sh` y
+   comprueba que imprime `teardown: OK` (sin contenedores, redes, volúmenes ni
+   imágenes de PoC). Actualiza `PIPELINE_STATUS.md` y entrega un resumen con
+   rutas a los reportes. Sin cierre, el pipeline queda `blocked`, no `done`.
 
 ## Reglas
 
@@ -56,6 +58,8 @@ humano. No se salta ninguna fase y no se escribe código hasta la Fase 3.
 - No lances pruebas dinámicas fuera de Docker ni contra IPs públicas.
 - Si falta Docker, bloquea la Fase 2; no improvises.
 - Cada hallazgo conserva su ID (`V-NN`, `N-NN`, `W-NN`) entre fases.
+- Al terminar la última fase se cierra todo: no quedan contenedores, redes,
+  volúmenes ni artefactos temporales de PoC.
 
 ## Salida
 

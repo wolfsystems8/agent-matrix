@@ -6,6 +6,7 @@ import contextlib
 import importlib.util
 import io
 import json
+import os
 import shutil
 import sys
 import tempfile
@@ -201,6 +202,63 @@ class TestInstall(unittest.TestCase):
         self.assertIn("TARGET_CONTEXT=../../..", lines)
         self.assertIn("REPORTS_DIR=../../../reports", lines)
 
+    def test_install_replaces_symlink_without_following_it(self) -> None:
+        victim = self.tmp.parent / f"victima-symlink-{self.tmp.name}.txt"
+        victim.write_text("importante\n", encoding="utf-8")
+        self.addCleanup(victim.unlink, missing_ok=True)
+        target_file = self.tmp / ".claude/agents/threat-modeler.md"
+        target_file.parent.mkdir(parents=True)
+        target_file.symlink_to(victim)
+
+        args = Namespace(
+            target=str(self.tmp),
+            tools="claude",
+            force=True,
+            dry_run=False,
+            prune=False,
+            no_rules=True,
+        )
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(secmatrix.cmd_install(args), 0)
+
+        # El symlink se sustituye; el archivo apuntado no se toca.
+        self.assertFalse(target_file.is_symlink())
+        self.assertEqual(victim.read_text(encoding="utf-8"), "importante\n")
+        self.assertIn("threat-modeler", target_file.read_text(encoding="utf-8"))
+
+    def test_install_rejects_symlinked_core_destination(self) -> None:
+        outside = self.tmp.parent / f"fuera-core-{self.tmp.name}"
+        outside.mkdir()
+        self.addCleanup(shutil.rmtree, outside, ignore_errors=True)
+        dest = self.tmp / ".sec-agent-matrix"
+        dest.mkdir()
+        (dest / "core").symlink_to(outside, target_is_directory=True)
+
+        args = Namespace(
+            target=str(self.tmp),
+            tools="claude",
+            force=False,
+            dry_run=False,
+            prune=False,
+            no_rules=True,
+        )
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit) as ctx:
+                secmatrix.cmd_install(args)
+        self.assertEqual(ctx.exception.code, 1)
+        self.assertEqual(list(outside.iterdir()), [])
+
+    def test_write_files_ignores_symlinked_directory(self) -> None:
+        out = self.tmp / "proj"
+        out.mkdir()
+        outside = self.tmp / "fuera-dir"
+        outside.mkdir()
+        (out / ".claude").symlink_to(outside, target_is_directory=True)
+        with contextlib.redirect_stdout(io.StringIO()):
+            written = secmatrix.write_files(out, {".claude/agents/x.md": "hola\n"})
+        self.assertEqual(written, [])
+        self.assertFalse((outside / "agents/x.md").exists())
+
     def test_install_respects_conflicting_file(self) -> None:
         target_file = self.tmp / ".claude/agents/threat-modeler.md"
         target_file.parent.mkdir(parents=True)
@@ -290,6 +348,63 @@ class TestClean(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(secmatrix.cmd_clean(Namespace()), 0)
         self.assertTrue(victim.exists())
+
+
+class TestSandboxHardening(unittest.TestCase):
+    """V-06/V-07 y cierre obligatorio del entorno."""
+
+    def test_teardown_script_is_executable(self) -> None:
+        script = ROOT / "core/sandbox/scripts/teardown.sh"
+        self.assertTrue(script.is_file())
+        self.assertTrue(os.access(script, os.X_OK))
+        text = script.read_text(encoding="utf-8")
+        self.assertIn("down -v", text)
+        self.assertIn("teardown: OK", text)
+
+    def test_images_pinned_by_digest(self) -> None:
+        compose = (ROOT / "core/sandbox/docker-compose.sandbox.yml").read_text(encoding="utf-8")
+        image_lines = [
+            line.strip() for line in compose.splitlines() if line.strip().startswith("image:")
+        ]
+        self.assertTrue(image_lines)
+        for line in image_lines:
+            self.assertIn("@sha256:", line, f"imagen sin digest: {line}")
+
+        for dockerfile in sorted((ROOT / "core/sandbox").rglob("Dockerfile*")):
+            for line in dockerfile.read_text(encoding="utf-8").splitlines():
+                if line.startswith("FROM "):
+                    self.assertIn(
+                        "@sha256:", line, f"{dockerfile.name}: base sin digest: {line}"
+                    )
+
+    def test_ci_actions_pinned_by_sha(self) -> None:
+        ci = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        uses = [line.split("uses:", 1)[1].strip() for line in ci.splitlines() if "uses:" in line]
+        self.assertTrue(uses)
+        for ref in uses:
+            self.assertRegex(ref.split()[0], r"@[0-9a-f]{40}$")
+
+    def test_containers_not_root_and_least_privilege(self) -> None:
+        compose = (ROOT / "core/sandbox/docker-compose.sandbox.yml").read_text(encoding="utf-8")
+        self.assertEqual(compose.count("cap_drop:"), 4)
+        self.assertEqual(compose.count("read_only: true"), 4)
+        self.assertIn('user: "70:70"', compose)
+        for dockerfile in ("Dockerfile.pentest", "demo-target/Dockerfile"):
+            text = (ROOT / "core/sandbox" / dockerfile).read_text(encoding="utf-8")
+            self.assertIn("USER 10001:10001", text, dockerfile)
+        forwarder = (ROOT / "core/sandbox/Dockerfile.forwarder").read_text(encoding="utf-8")
+        self.assertIn("USER 65534:65534", forwarder)
+
+    def test_skills_and_pipeline_require_teardown(self) -> None:
+        for path in (
+            "core/skills/sandbox-pentest/SKILL.md",
+            "core/skills/security-regression-qa/SKILL.md",
+            "core/skills/security-audit-pipeline/SKILL.md",
+            "core/pipeline/PIPELINE_ORCHESTRATOR.md",
+        ):
+            text = (ROOT / path).read_text(encoding="utf-8")
+            self.assertIn("teardown.sh", text, path)
+            self.assertIn("teardown: OK", text, path)
 
 
 if __name__ == "__main__":

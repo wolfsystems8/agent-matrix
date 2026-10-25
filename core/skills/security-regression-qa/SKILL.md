@@ -30,7 +30,9 @@ procedimiento detallado está en el agente `regression-qa`.
 4. Prueba los flujos críticos afectados (login, permisos, pagos, uploads).
 5. Marca cada hallazgo: Cerrado, Parcial o Reabierto.
 6. Si hay reabiertos, vuelve a `security-remediation` (máx. 3 iteraciones).
-7. Destruye el sandbox y documenta el entorno usado.
+7. **Cierre obligatorio.** Ejecuta `sh {{CORE}}/sandbox/scripts/teardown.sh` y
+   confirma que imprime `teardown: OK` (sin contenedores, redes ni volúmenes).
+   Documenta el entorno usado en `REMEDIATION_SUMMARY.md`.
 
 ## Salida
 
@@ -41,4 +43,5 @@ procedimiento detallado está en el agente `regression-qa`.
 - Sin re-ejecución no hay cierre.
 - No adaptes tests para ocultar un fallo real.
 - Si no puedes ejecutar algo, dilo; no asumas éxito.
-- No dejes contenedores ni volúmenes del sandbox en ejecución.
+- No dejes contenedores ni volúmenes del sandbox en ejecución: el cierre es
+  parte del trabajo, no un extra.

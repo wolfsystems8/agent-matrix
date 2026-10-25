@@ -57,8 +57,13 @@ El script falla si hay egreso a Internet.
 ## Limpieza
 
 ```bash
-docker compose -f core/sandbox/docker-compose.sandbox.yml down -v
+sh core/sandbox/scripts/teardown.sh
 ```
+
+El script baja el stack con `down -v` (contenedores, redes y volúmenes),
+elimina los contenedores e imágenes temporales de PoC (`secmatrix-poc-*`) y
+verifica que no queda nada. Imprime `teardown: OK` si el cierre es completo.
+Es obligatorio al terminar cada fase dinámica y el pipeline.
 
 ## Límites
 
@@ -67,5 +72,12 @@ docker compose -f core/sandbox/docker-compose.sandbox.yml down -v
   contenedores conectados solo a una red interna). El servicio `target-edge`
   (socat) escucha en `127.0.0.1:$TARGET_PORT` y solo reenvía a
   `target-app:8080`, así que el objetivo sigue sin ruta a Internet.
+- Ningún servicio corre como root: `target-app` y `pentest-runner` usan
+  uid/gid 10001, `target-db` usa el usuario `postgres` (70) y `target-edge`
+  usa `nobody` (65534).
+- Todos los servicios tienen `cap_drop: ALL` y ninguna capability extra,
+  `no-new-privileges` y rootfs de solo lectura con `/tmp` en `tmpfs`.
+- El runner no puede hacer raw scans (`nmap -sS`/`-sU`): usa `-sT -sV -Pn`.
+- Las imágenes y las actions de CI están fijadas por digest/SHA.
 - No uses `--privileged` ni montes `/var/run/docker.sock`.
 - Si tu app escucha en otro puerto, ajusta el mapeo y la URL base de los agentes.

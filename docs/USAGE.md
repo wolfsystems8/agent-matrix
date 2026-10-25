@@ -104,7 +104,8 @@ Después usa regression-qa y re-ejecuta las PoCs en el sandbox.
 - Tests, lint, typecheck y build en verde.
 - Cada PoC confirmada deja de reproducirse.
 - `REMEDIATION_SUMMARY.md` marca Cerrado / Parcial / Reabierto con evidencia.
-- Sandbox destruido (`down -v`).
+- Sandbox cerrado: `sh core/sandbox/scripts/teardown.sh` imprime
+  `teardown: OK` (sin contenedores, redes, volúmenes ni PoC temporales).
 
 ## 5. Pipeline completo
 
