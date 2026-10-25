@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Generate adapters
+        run: python3 tools/secmatrix.py build
+
+      - name: Verify generated files are committed
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git status --short
+            echo "::error::Los adaptadores están desincronizados. Ejecuta 'python3 tools/secmatrix.py build' y haz commit."
+            exit 1
+          fi
+
+      - name: Validate core and adapters
+        run: python3 tools/secmatrix.py validate
+
+      - name: Run tests
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Install smoke test
+        run: |
+          target="$(mktemp -d)"
+          python3 tools/secmatrix.py install --target "$target" --no-rules
+          test -f "$target/.claude/agents/threat-modeler.md"
+          test -f "$target/.codex/agents/threat-modeler.toml"
+          test -f "$target/.sec-agent-matrix/core/ethics/ETHICAL_DIRECTIVE.md"

@@ -1,0 +1,208 @@
+"""Tests del toolchain y de la integridad de los adaptadores."""
+
+from __future__ import annotations
+
+import contextlib
+import importlib.util
+import io
+import json
+import shutil
+import sys
+import tempfile
+import tomllib
+import unittest
+from argparse import Namespace
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SPEC = importlib.util.spec_from_file_location("secmatrix", ROOT / "tools" / "secmatrix.py")
+secmatrix = importlib.util.module_from_spec(SPEC)
+assert SPEC.loader is not None
+sys.modules[SPEC.name] = secmatrix
+SPEC.loader.exec_module(secmatrix)
+
+
+class TestCore(unittest.TestCase):
+    def test_agents_load(self) -> None:
+        agents = secmatrix.load_agents()
+        self.assertEqual(len(agents), 9)
+        self.assertEqual(len({a.id for a in agents}), 9)
+        phases = {a.phase for a in agents}
+        self.assertEqual(phases, {1, 2, 3})
+        expected = {
+            "threat-modeler",
+            "sast-auditor",
+            "triage-master",
+            "sandbox-manager",
+            "network-auditor",
+            "web-dast-tester",
+            "exploit-tester",
+            "secfix-patcher",
+            "regression-qa",
+        }
+        self.assertEqual({a.id for a in agents}, expected)
+
+    def test_agent_authority_matches_tools(self) -> None:
+        for agent in secmatrix.load_agents():
+            if agent.authority == "write":
+                self.assertIn("edit", agent.tools, agent.id)
+            else:
+                self.assertNotIn("edit", agent.tools, agent.id)
+
+    def test_skills_load(self) -> None:
+        skills = secmatrix.load_skills()
+        self.assertEqual(len(skills), 9)
+        for skill in skills:
+            self.assertEqual(skill.id, skill.name)
+            self.assertTrue(skill.description)
+            self.assertTrue(skill.body.strip())
+
+    def test_commands_load(self) -> None:
+        commands = secmatrix.load_commands()
+        self.assertEqual({c.name for c in commands}, {"sec-audit", "sec-pentest", "sec-fix", "sec-pipeline"})
+
+    def test_frontmatter_parser(self) -> None:
+        meta, body = secmatrix.parse_frontmatter(
+            '---\nid: demo\ntools: [read, write]\nphase: 1\n---\n\n# Body\n'
+        )
+        self.assertEqual(meta["id"], "demo")
+        self.assertEqual(meta["tools"], ["read", "write"])
+        self.assertEqual(meta["phase"], "1")
+        self.assertEqual(body.strip(), "# Body")
+
+
+class TestBuild(unittest.TestCase):
+    def test_generated_files_in_sync(self) -> None:
+        files = secmatrix.build_files("core", secmatrix.TOOLS)
+        self.assertEqual(len(files), 85)
+        for path, content in files.items():
+            target = ROOT / path
+            self.assertTrue(target.exists(), f"falta {path}")
+            self.assertEqual(target.read_text(encoding="utf-8"), content, f"desincronizado {path}")
+
+    def test_no_unresolved_tokens(self) -> None:
+        for path, content in secmatrix.build_files("core", secmatrix.TOOLS).items():
+            self.assertNotIn(secmatrix.CORE_TOKEN, content, path)
+
+    def test_build_is_deterministic(self) -> None:
+        first = secmatrix.build_files("core", secmatrix.TOOLS)
+        second = secmatrix.build_files("core", secmatrix.TOOLS)
+        self.assertEqual(first, second)
+
+    def test_manifest_matches_disk(self) -> None:
+        manifest = json.loads((ROOT / secmatrix.MANIFEST_NAME).read_text(encoding="utf-8"))
+        for path, digest in manifest["files"].items():
+            data = (ROOT / path).read_text(encoding="utf-8")
+            self.assertEqual(secmatrix.sha256(data), digest, path)
+
+    def test_codex_toml_is_valid(self) -> None:
+        for path in (ROOT / ".codex" / "agents").glob("*.toml"):
+            data = tomllib.loads(path.read_text(encoding="utf-8"))
+            self.assertTrue(data["name"], path)
+            self.assertTrue(data["description"], path)
+            self.assertTrue(data["developer_instructions"].strip(), path)
+
+    def test_opencode_permissions(self) -> None:
+        read_only = (ROOT / ".opencode/agents/network-auditor.md").read_text(encoding="utf-8")
+        writer = (ROOT / ".opencode/agents/secfix-patcher.md").read_text(encoding="utf-8")
+        self.assertIn("mode: subagent", read_only)
+        self.assertIn("effect: deny", read_only)
+        self.assertIn("reports/**", read_only)
+        self.assertIn('action: edit\n    resource: "*"\n    effect: allow', writer)
+
+    def test_validate_passes(self) -> None:
+        with contextlib.redirect_stdout(io.StringIO()):
+            code = secmatrix.cmd_validate(Namespace())
+        self.assertEqual(code, 0)
+
+
+class TestInstall(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp(prefix="secmatrix-"))
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_install_layout_and_idempotency(self) -> None:
+        args = Namespace(
+            target=str(self.tmp),
+            tools="",
+            force=False,
+            dry_run=False,
+            prune=False,
+            no_rules=False,
+        )
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(secmatrix.cmd_install(args), 0)
+
+        self.assertTrue((self.tmp / ".sec-agent-matrix/core/ethics/ETHICAL_DIRECTIVE.md").exists())
+        self.assertTrue((self.tmp / ".claude/agents/threat-modeler.md").exists())
+        self.assertTrue((self.tmp / ".cursor/agents/threat-modeler.md").exists())
+        self.assertTrue((self.tmp / ".codex/agents/threat-modeler.toml").exists())
+        self.assertTrue((self.tmp / ".agents/skills/security-audit-pipeline/SKILL.md").exists())
+        self.assertTrue((self.tmp / ".opencode/skills/security-audit-pipeline/SKILL.md").exists())
+        self.assertTrue((self.tmp / ".opencode/commands/sec-audit.md").exists())
+        self.assertTrue((self.tmp / "reports/README.md").exists())
+        self.assertTrue((self.tmp / ".sec-agent-matrix/core/sandbox/.env").exists())
+        env = (self.tmp / ".sec-agent-matrix/core/sandbox/.env").read_text(encoding="utf-8")
+        self.assertIn("TARGET_CONTEXT=../../..", env)
+        self.assertIn("REPORTS_DIR=../../../reports", env)
+        self.assertTrue((self.tmp / "AGENTS.md").exists())
+        self.assertTrue((self.tmp / "CLAUDE.md").exists())
+
+        agent = (self.tmp / ".claude/agents/threat-modeler.md").read_text(encoding="utf-8")
+        self.assertIn(".sec-agent-matrix/core/ethics/ETHICAL_DIRECTIVE.md", agent)
+        self.assertNotIn(secmatrix.CORE_TOKEN, agent)
+
+        agents_md = (self.tmp / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertEqual(agents_md.count("<!-- sec-agent-matrix:begin -->"), 1)
+
+        before = (self.tmp / ".claude/agents/threat-modeler.md").read_text(encoding="utf-8")
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(secmatrix.cmd_install(args), 0)
+        after = (self.tmp / ".claude/agents/threat-modeler.md").read_text(encoding="utf-8")
+        self.assertEqual(before, after)
+        self.assertEqual(
+            (self.tmp / "AGENTS.md").read_text(encoding="utf-8").count("<!-- sec-agent-matrix:begin -->"),
+            1,
+        )
+
+    def test_install_respects_conflicting_file(self) -> None:
+        target_file = self.tmp / ".claude/agents/threat-modeler.md"
+        target_file.parent.mkdir(parents=True)
+        target_file.write_text("contenido propio del usuario\n", encoding="utf-8")
+
+        args = Namespace(
+            target=str(self.tmp),
+            tools="claude",
+            force=False,
+            dry_run=False,
+            prune=False,
+            no_rules=True,
+        )
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            code = secmatrix.cmd_install(args)
+        self.assertEqual(code, 1)
+        self.assertEqual(target_file.read_text(encoding="utf-8"), "contenido propio del usuario\n")
+
+        args.force = True
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(secmatrix.cmd_install(args), 0)
+        self.assertIn("threat-modeler", target_file.read_text(encoding="utf-8"))
+
+    def test_dry_run_does_not_write(self) -> None:
+        args = Namespace(
+            target=str(self.tmp),
+            tools="claude",
+            force=False,
+            dry_run=True,
+            prune=False,
+            no_rules=True,
+        )
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(secmatrix.cmd_install(args), 0)
+        self.assertFalse((self.tmp / ".claude").exists())
+
+
+if __name__ == "__main__":
+    unittest.main()

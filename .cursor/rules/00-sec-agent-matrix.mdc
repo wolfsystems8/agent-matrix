@@ -1,0 +1,27 @@
+---
+description: "Guardrails y pipeline de sec-agent-matrix para auditorías de seguridad"
+globs: ["**/*"]
+alwaysApply: true
+---
+
+<!-- sec-agent-matrix:begin -->
+## sec-agent-matrix — auditoría de seguridad
+
+Este proyecto incluye el pipeline **sec-agent-matrix**. Antes de cualquier tarea
+de seguridad, lee y respeta `core/ethics/ETHICAL_DIRECTIVE.md`.
+
+- Fases: SSDLC (solo lectura) → Pentest en sandbox → Remediación (escritura).
+- Pipeline completo: `core/pipeline/PIPELINE_ORCHESTRATOR.md`.
+- Reportes: `reports/` (único destino de escritura en Fases 1 y 2).
+- Sandbox: `core/sandbox/docker-compose.sandbox.yml` (red interna, sin egreso).
+- Skills disponibles: `security-audit-pipeline`, `threat-modeling`,
+  `sast-code-audit`, `vulnerability-triage`, `sandbox-pentest`,
+  `network-tls-audit`, `web-api-dast`, `security-remediation`,
+  `security-regression-qa`.
+- Autorización: sin `reports/ENGAGEMENT_SCOPE.md` no se ejecutan pruebas
+  dinámicas. Nunca se prueba un objetivo fuera de `sandbox_net`.
+
+Comandos (Claude Code, Cursor, OpenCode): `/sec-audit`, `/sec-pentest`,
+`/sec-fix`, `/sec-pipeline`. En Codex, invoca la skill
+`$security-audit-pipeline`.
+<!-- sec-agent-matrix:end -->

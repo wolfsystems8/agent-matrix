@@ -1,0 +1,28 @@
+# Los adaptadores (.claude/, .cursor/, .codex/, .agents/, .opencode/) y el
+# manifiesto se versionan a propósito: son el artefacto de instalación.
+# Se regeneran con `python3 tools/secmatrix.py build`; no editar a mano.
+
+# Reportes de ejecución
+reports/*
+!reports/README.md
+
+# Entorno local
+.env
+!.env.example
+
+# Sandbox
+core/sandbox/scripts/poc_*
+!core/sandbox/scripts/wait_for_target.sh
+!core/sandbox/scripts/smoke_test.sh
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Editores y sistema
+.DS_Store
+.idea/
+.vscode/
+*.swp

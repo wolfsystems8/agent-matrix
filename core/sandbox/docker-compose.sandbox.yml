@@ -1,0 +1,69 @@
+name: sec-agent-matrix
+
+# Entorno aislado de verificación. No publicar puertos en 0.0.0.0.
+# Variables: TARGET_CONTEXT, TARGET_DOCKERFILE, TARGET_PORT, REPORTS_DIR.
+
+services:
+  target-app:
+    build:
+      context: ${TARGET_CONTEXT:-../..}
+      dockerfile: ${TARGET_DOCKERFILE:-Dockerfile}
+    container_name: sandbox_target_app
+    ports:
+      - "127.0.0.1:${TARGET_PORT:-8080}:8080"
+    environment:
+      - NODE_ENV=testing
+      - DB_HOST=target-db
+      - DATABASE_URL=postgres://test_user:test_pass@target-db:5432/test_db
+    depends_on:
+      target-db:
+        condition: service_healthy
+    networks:
+      - sandbox_net
+    security_opt:
+      - no-new-privileges:true
+
+  target-db:
+    image: postgres:15-alpine
+    container_name: sandbox_target_db
+    environment:
+      - POSTGRES_DB=test_db
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_pass
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d test_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - sandbox_net
+    security_opt:
+      - no-new-privileges:true
+
+  pentest-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.pentest
+    container_name: sandbox_pentester
+    volumes:
+      - ./scripts:/scripts
+      - ${REPORTS_DIR:-../../reports}:/reports
+    depends_on:
+      target-app:
+        condition: service_started
+      target-db:
+        condition: service_healthy
+    networks:
+      - sandbox_net
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_RAW   # necesario para descubrimiento y escaneos ICMP/SYN
+    command: tail -f /dev/null
+
+networks:
+  sandbox_net:
+    driver: bridge
+    internal: true # bloquea la salida a Internet; solo tráfico interno
