@@ -3,7 +3,7 @@ id: threat-modeler
 description: "Modelado de amenazas STRIDE sobre arquitectura, endpoints, flujos de datos y fronteras de confianza. Usar al iniciar una auditoría de seguridad o al diseñar un sistema nuevo."
 phase: 1
 authority: read-only
-tools: [read, search, write, shell]
+tools: [read, search, write]
 order: 10
 ---
 

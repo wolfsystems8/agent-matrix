@@ -49,6 +49,15 @@ class TestCore(unittest.TestCase):
             else:
                 self.assertNotIn("edit", agent.tools, agent.id)
 
+    def test_read_only_agents_without_shell(self) -> None:
+        # Excepción documentada: sast-auditor ejecuta scanners (semgrep/bandit).
+        shell_agents = {
+            a.id
+            for a in secmatrix.load_agents()
+            if a.authority == "read-only" and "shell" in a.tools
+        }
+        self.assertEqual(shell_agents, {"sast-auditor"})
+
     def test_skills_load(self) -> None:
         skills = secmatrix.load_skills()
         self.assertEqual(len(skills), 9)
@@ -103,11 +112,15 @@ class TestBuild(unittest.TestCase):
             self.assertTrue(data["developer_instructions"].strip(), path)
 
     def test_opencode_permissions(self) -> None:
-        read_only = (ROOT / ".opencode/agents/network-auditor.md").read_text(encoding="utf-8")
+        read_only = (ROOT / ".opencode/agents/threat-modeler.md").read_text(encoding="utf-8")
+        sandbox = (ROOT / ".opencode/agents/network-auditor.md").read_text(encoding="utf-8")
         writer = (ROOT / ".opencode/agents/secfix-patcher.md").read_text(encoding="utf-8")
         self.assertIn("mode: subagent", read_only)
-        self.assertIn("effect: deny", read_only)
         self.assertIn("reports/**", read_only)
+        # V-03: los agentes de solo lectura no tienen shell libre.
+        self.assertIn('action: shell\n    resource: "*"\n    effect: deny', read_only)
+        self.assertIn('resource: "git log *"', read_only)
+        self.assertIn('action: shell\n    resource: "*"\n    effect: allow', sandbox)
         self.assertIn('action: edit\n    resource: "*"\n    effect: allow', writer)
 
     def test_validate_passes(self) -> None:
@@ -223,6 +236,60 @@ class TestInstall(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(secmatrix.cmd_install(args), 0)
         self.assertFalse((self.tmp / ".claude").exists())
+
+    def test_prune_ignores_manifest_paths_outside_project(self) -> None:
+        out = self.tmp / "proj"
+        out.mkdir()
+        victim = self.tmp / "victima.txt"
+        victim.write_text("importante\n", encoding="utf-8")
+        (out / secmatrix.MANIFEST_NAME).write_text(
+            json.dumps({"name": "x", "files": {"../victima.txt": "h"}}),
+            encoding="utf-8",
+        )
+        with contextlib.redirect_stdout(io.StringIO()):
+            secmatrix.write_files(out, {}, prune=True)
+        self.assertTrue(victim.exists())
+
+
+class TestClean(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp(prefix="secmatrix-clean-"))
+        self.original_root = secmatrix.ROOT
+        secmatrix.ROOT = self.tmp
+        (self.tmp / secmatrix.MANIFEST_NAME).write_text(
+            json.dumps({"name": "x", "files": {".claude/agents/a.md": "h"}}),
+            encoding="utf-8",
+        )
+        (self.tmp / ".claude/agents").mkdir(parents=True)
+        (self.tmp / ".claude/agents/a.md").write_text("generado\n", encoding="utf-8")
+        (self.tmp / ".claude/agents/mio.md").write_text("propio\n", encoding="utf-8")
+
+    def tearDown(self) -> None:
+        secmatrix.ROOT = self.original_root
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_clean_only_removes_manifest_files(self) -> None:
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(secmatrix.cmd_clean(Namespace()), 0)
+        self.assertFalse((self.tmp / ".claude/agents/a.md").exists())
+        self.assertTrue((self.tmp / ".claude/agents/mio.md").exists())
+
+    def test_clean_without_manifest_is_noop(self) -> None:
+        (self.tmp / secmatrix.MANIFEST_NAME).unlink()
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(secmatrix.cmd_clean(Namespace()), 0)
+        self.assertTrue((self.tmp / ".claude/agents/a.md").exists())
+
+    def test_clean_ignores_paths_outside_project(self) -> None:
+        victim = self.tmp.parent / f"victima-clean-{self.tmp.name}.txt"
+        victim.write_text("importante\n", encoding="utf-8")
+        self.addCleanup(victim.unlink, missing_ok=True)
+        manifest = json.loads((self.tmp / secmatrix.MANIFEST_NAME).read_text(encoding="utf-8"))
+        manifest["files"]["../" + victim.name] = "h"
+        (self.tmp / secmatrix.MANIFEST_NAME).write_text(json.dumps(manifest), encoding="utf-8")
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(secmatrix.cmd_clean(Namespace()), 0)
+        self.assertTrue(victim.exists())
 
 
 if __name__ == "__main__":

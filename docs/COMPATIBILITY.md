@@ -14,7 +14,7 @@ regenera con `python3 tools/secmatrix.py build`.
 | Comandos de proyecto | ✅ `.claude/commands/` | ✅ `.cursor/commands/` | ❌ (custom prompts deprecados) | ✅ `.opencode/commands/` |
 | Reglas always-on | `CLAUDE.md` | `.cursor/rules/*.mdc` | `AGENTS.md` | `AGENTS.md` |
 | Permisos por ruta | ❌ (solo tools) | ❌ | ❌ | ✅ |
-| Aislamiento de escritura | `tools` sin `Edit` | `readonly` (todo o nada) | instrucciones | `permissions` |
+| Aislamiento de escritura | `tools` sin `Edit` | ❌ (sin scoping; `readonly` bloquearía los reportes) | instrucciones | `permissions` |
 
 ## Claude Code
 

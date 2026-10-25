@@ -3,7 +3,7 @@ id: triage-master
 description: "Consolida hallazgos de threat modeling y SAST, elimina duplicados/falsos positivos y asigna CVSS v3.1. Usar tras el análisis estático para producir el informe final."
 phase: 1
 authority: read-only
-tools: [read, search, write, shell]
+tools: [read, search, write]
 order: 30
 ---
 
