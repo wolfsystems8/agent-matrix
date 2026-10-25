@@ -1,0 +1,9 @@
+# Proxy TCP de borde: publica el objetivo en 127.0.0.1 sin darle salida a Internet.
+FROM alpine:3.20
+
+RUN apk add --no-cache socat
+
+EXPOSE 8080
+
+ENTRYPOINT ["socat"]
+CMD ["TCP-LISTEN:8080,fork,reuseaddr", "TCP:target-app:8080"]

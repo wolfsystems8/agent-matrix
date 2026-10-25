@@ -698,12 +698,16 @@ def cmd_install(args: argparse.Namespace) -> int:
     sandbox_dir = target / ".sec-agent-matrix" / "core" / "sandbox"
     env_file = sandbox_dir / ".env"
     if not env_file.exists():
-        env_file.write_text(
-            "# Generado por sec-agent-matrix: rutas relativas al proyecto instalado.\n"
-            "TARGET_CONTEXT=../../..\n"
-            "REPORTS_DIR=../../../reports\n",
-            encoding="utf-8",
-        )
+        env_lines = [
+            "# Generado por sec-agent-matrix: rutas relativas al proyecto instalado."
+        ]
+        if (target / "Dockerfile").exists():
+            env_lines.append("TARGET_CONTEXT=../../..")
+        else:
+            # Sin Dockerfile en la raíz se usa el objetivo de demo del sandbox.
+            env_lines.append("# TARGET_CONTEXT=../../..  # sin Dockerfile en la raíz")
+        env_lines.append("REPORTS_DIR=../../../reports")
+        env_file.write_text("\n".join(env_lines) + "\n", encoding="utf-8")
 
     # 3) Scaffolding de reportes.
     reports = target / "reports"

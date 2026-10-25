@@ -145,7 +145,10 @@ class TestInstall(unittest.TestCase):
         self.assertTrue((self.tmp / "reports/README.md").exists())
         self.assertTrue((self.tmp / ".sec-agent-matrix/core/sandbox/.env").exists())
         env = (self.tmp / ".sec-agent-matrix/core/sandbox/.env").read_text(encoding="utf-8")
-        self.assertIn("TARGET_CONTEXT=../../..", env)
+        # Sin Dockerfile en la raíz se conserva el objetivo de demo del sandbox.
+        self.assertFalse(
+            any(line.startswith("TARGET_CONTEXT=") for line in env.splitlines())
+        )
         self.assertIn("REPORTS_DIR=../../../reports", env)
         self.assertTrue((self.tmp / "AGENTS.md").exists())
         self.assertTrue((self.tmp / "CLAUDE.md").exists())
@@ -166,6 +169,24 @@ class TestInstall(unittest.TestCase):
             (self.tmp / "AGENTS.md").read_text(encoding="utf-8").count("<!-- sec-agent-matrix:begin -->"),
             1,
         )
+
+    def test_install_env_targets_project_root_when_dockerfile_exists(self) -> None:
+        (self.tmp / "Dockerfile").write_text("FROM scratch\n", encoding="utf-8")
+        args = Namespace(
+            target=str(self.tmp),
+            tools="",
+            force=False,
+            dry_run=False,
+            prune=False,
+            no_rules=True,
+        )
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(secmatrix.cmd_install(args), 0)
+
+        env = (self.tmp / ".sec-agent-matrix/core/sandbox/.env").read_text(encoding="utf-8")
+        lines = env.splitlines()
+        self.assertIn("TARGET_CONTEXT=../../..", lines)
+        self.assertIn("REPORTS_DIR=../../../reports", lines)
 
     def test_install_respects_conflicting_file(self) -> None:
         target_file = self.tmp / ".claude/agents/threat-modeler.md"

@@ -190,7 +190,7 @@ la lista `tools`; en Cursor y Codex con instrucciones y el gate humano.
 ## Sandbox
 
 ```bash
-# Arrancar (la app auditada debe tener Dockerfile y escuchar en :8080)
+# Arrancar: por defecto levanta demo-target (app vulnerable de demostración)
 docker compose -f core/sandbox/docker-compose.sandbox.yml up -d --build
 
 # Verificar aislamiento
@@ -202,12 +202,17 @@ docker compose -f core/sandbox/docker-compose.sandbox.yml \
 docker compose -f core/sandbox/docker-compose.sandbox.yml down -v
 ```
 
-Características: red `internal: true`, puerto del objetivo solo en `127.0.0.1`,
-`no-new-privileges`, `cap_drop: ALL` + `NET_RAW` solo en el runner, y un
-`Dockerfile.pentest` con `nmap`, `sslyze`, `curl`, `openssl` y `nc`.
+Para auditar una app propia, define `TARGET_CONTEXT` (y `TARGET_DOCKERFILE` /
+`TARGET_PORT` si aplica) en `core/sandbox/.env`: la app debe exponer `:8080`.
 
-Variables: `TARGET_CONTEXT`, `TARGET_DOCKERFILE`, `TARGET_PORT`, `REPORTS_DIR`.
-Ver [`core/sandbox/README.md`](core/sandbox/README.md).
+Características: red `internal: true`, objetivo expuesto solo en `127.0.0.1` a
+través del proxy `target-edge` (socat), `no-new-privileges`, `cap_drop: ALL` +
+`NET_RAW` solo en el runner, y un `Dockerfile.pentest` con `nmap`, `sslyze`,
+`curl`, `openssl` y `nc`.
+
+Variables: `TARGET_CONTEXT` (default `./demo-target`), `TARGET_DOCKERFILE`,
+`TARGET_PORT`, `REPORTS_DIR`. Ver
+[`core/sandbox/README.md`](core/sandbox/README.md).
 
 ## Toolchain
 

@@ -2,19 +2,26 @@ name: sec-agent-matrix
 
 # Entorno aislado de verificación. No publicar puertos en 0.0.0.0.
 # Variables: TARGET_CONTEXT, TARGET_DOCKERFILE, TARGET_PORT, REPORTS_DIR.
+#
+# Por defecto se construye el objetivo de demostración (./demo-target), que
+# contiene vulnerabilidades intencionadas. Para auditar una app real, crea un
+# .env junto a este archivo (o exporta la variable) con:
+#   TARGET_CONTEXT=/ruta/a/la/app
+#   TARGET_DOCKERFILE=Dockerfile
+#   TARGET_PORT=8080
 
 services:
   target-app:
     build:
-      context: ${TARGET_CONTEXT:-../..}
+      context: ${TARGET_CONTEXT:-./demo-target}
       dockerfile: ${TARGET_DOCKERFILE:-Dockerfile}
     container_name: sandbox_target_app
-    ports:
-      - "127.0.0.1:${TARGET_PORT:-8080}:8080"
     environment:
       - NODE_ENV=testing
       - DB_HOST=target-db
       - DATABASE_URL=postgres://test_user:test_pass@target-db:5432/test_db
+      # El objetivo de demo se niega a arrancar sin este acuse explícito.
+      - DEMO_TARGET_ACK=1
     depends_on:
       target-db:
         condition: service_healthy
@@ -22,6 +29,26 @@ services:
       - sandbox_net
     security_opt:
       - no-new-privileges:true
+
+  # Docker no publica puertos de contenedores conectados solo a una red
+  # interna, así que el borde se expone aquí. El objetivo sigue sin salida a
+  # Internet y el proxy solo reenvía a target-app:8080.
+  target-edge:
+    build:
+      context: .
+      dockerfile: Dockerfile.forwarder
+    container_name: sandbox_target_edge
+    ports:
+      - "127.0.0.1:${TARGET_PORT:-8080}:8080"
+    depends_on:
+      target-app:
+        condition: service_started
+    networks:
+      - sandbox_edge
+      - sandbox_net
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
 
   target-db:
     image: postgres:15-alpine
@@ -67,3 +94,5 @@ networks:
   sandbox_net:
     driver: bridge
     internal: true # bloquea la salida a Internet; solo tráfico interno
+  sandbox_edge:
+    driver: bridge # solo para el proxy de borde; el objetivo no la usa

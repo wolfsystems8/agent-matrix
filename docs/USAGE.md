@@ -55,8 +55,9 @@ continúes sin aprobar.
 ### Requisitos
 
 - Docker + Compose v2.
-- La app auditada con `Dockerfile` y escuchando en `:8080` (o ajusta
-  `TARGET_PORT` y la URL base de los agentes).
+- Opcional: la app auditada con `Dockerfile` y escuchando en `:8080` (o ajusta
+  `TARGET_PORT` y la URL base de los agentes). Sin `TARGET_CONTEXT` se usa
+  `demo-target`, el objetivo vulnerable de demostración incluido en el sandbox.
 
 ### Ejecución
 
