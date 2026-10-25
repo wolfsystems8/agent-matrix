@@ -71,6 +71,20 @@ regenera con `python3 tools/secmatrix.py build`.
   sigue leyéndose).
 - **Instrucciones:** `AGENTS.md`.
 - **Invocación:** `/sec-audit` o `@security-audit-pipeline`.
+- **Skills globales:** añade la fuente canónica al `skills` de
+  `~/.config/opencode/opencode.jsonc` para tenerlos en cualquier proyecto
+  (`~/` se expande al home y la precedencia es mayor que los skills de proyecto
+  descubiertos):
+
+  ```jsonc
+  {
+    "$schema": "https://opencode.ai/config.json",
+    "skills": ["~/sec-agent-matrix/core/skills"]
+  }
+  ```
+
+  Los agentes y comandos no se globalizan: asumen `core/...` y `reports/` del
+  proyecto auditado.
 - **Permisos generados:**
   ```yaml
   permissions:

@@ -138,6 +138,23 @@ Ejemplo de prompt tras instalar en Claude Code:
 
 Detalles, formatos y limitaciones: [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md).
 
+### Skills globales en OpenCode
+
+Los skills son portables: puedes cargarlos en cualquier proyecto apuntando a la
+fuente canónica desde `~/.config/opencode/opencode.jsonc`.
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "skills": ["~/sec-agent-matrix/core/skills"]
+}
+```
+
+Los 9 skills quedan disponibles por ID (`web-api-dast`,
+`security-audit-pipeline`, etc.) sin depender del directorio de trabajo. Los
+agentes y comandos siguen siendo por proyecto, porque referencian `core/...` y
+`reports/` del repositorio auditado.
+
 ## Pipeline
 
 | Fase | Agentes | Salidas | Escritura |
