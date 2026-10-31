@@ -421,15 +421,17 @@ de seguridad, lee y respeta `{core}/ethics/ETHICAL_DIRECTIVE.md`.
 - Reportes: `reports/` (único destino de escritura en Fases 1 y 2).
 - Sandbox: `{core}/sandbox/docker-compose.sandbox.yml` (red interna, sin egreso).
 - Skills disponibles: `security-audit-pipeline`, `iso-audit-lifecycle`,
-  `risk-assessment-iso27005`, `itil-process-audit`, `threat-modeling`,
+  `risk-assessment-iso27005`, `itil-process-audit`, `sdlc-security`,
+  `injection-xss-analysis`, `web-vuln-identification`, `crypto-review`,
+  `output-encoding-csp`, `security-log-analysis`, `threat-modeling`,
   `sast-code-audit`, `vulnerability-triage`, `sandbox-pentest`,
   `network-tls-audit`, `web-api-dast`, `security-remediation`,
   `security-regression-qa`.
 - Autorización: sin `reports/ENGAGEMENT_SCOPE.md` no se ejecutan pruebas
   dinámicas. Nunca se prueba un objetivo fuera de `sandbox_net`.
 
-Comandos (Claude Code, Cursor, OpenCode): `/sec-iso-audit`, `/sec-audit`,
-`/sec-pentest`, `/sec-fix`, `/sec-pipeline`. En Codex, invoca la skill
+Comandos (Claude Code, Cursor, OpenCode): `/sec-iso-audit`, `/sec-sdlc`,
+`/sec-audit`, `/sec-pentest`, `/sec-fix`, `/sec-pipeline`. En Codex, invoca la skill
 `$security-audit-pipeline`.
 <!-- sec-agent-matrix:end -->"""
 
@@ -666,8 +668,8 @@ def cmd_validate(args: argparse.Namespace) -> int:
         print(f"ERROR: no se pudo cargar core/: {exc}")
         return 1
 
-    if len(agents) != 12:
-        errors.append(f"se esperaban 12 agentes, hay {len(agents)}")
+    if len(agents) != 21:
+        errors.append(f"se esperaban 21 agentes, hay {len(agents)}")
 
     ids: set[str] = set()
     for agent in agents:
@@ -836,6 +838,7 @@ def cmd_install(args: argparse.Namespace) -> int:
             # Sin Dockerfile en la raíz se usa el objetivo de demo del sandbox.
             env_lines.append("# TARGET_CONTEXT=../../..  # sin Dockerfile en la raíz")
         env_lines.append("REPORTS_DIR=../../../reports")
+        env_lines.append("SOURCE_DIR=../../..")
         env_file.write_text("\n".join(env_lines) + "\n", encoding="utf-8")
 
     # 3) Scaffolding de reportes.

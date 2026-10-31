@@ -26,14 +26,23 @@ SPEC.loader.exec_module(secmatrix)
 class TestCore(unittest.TestCase):
     def test_agents_load(self) -> None:
         agents = secmatrix.load_agents()
-        self.assertEqual(len(agents), 12)
-        self.assertEqual(len({a.id for a in agents}), 12)
+        self.assertEqual(len(agents), 21)
+        self.assertEqual(len({a.id for a in agents}), 21)
         phases = {a.phase for a in agents}
         self.assertEqual(phases, {1, 2, 3})
         expected = {
             "audit-program-lead",
             "itil-process-auditor",
             "risk-assessor",
+            "sdlc-security-lead",
+            "square-requirements",
+            "attack-surface-mapper",
+            "sqli-analyst",
+            "xss-analyst",
+            "web-vuln-analyst",
+            "crypto-reviewer",
+            "output-encoding-csp-reviewer",
+            "log-auditor",
             "threat-modeler",
             "sast-auditor",
             "triage-master",
@@ -64,7 +73,7 @@ class TestCore(unittest.TestCase):
 
     def test_skills_load(self) -> None:
         skills = secmatrix.load_skills()
-        self.assertEqual(len(skills), 12)
+        self.assertEqual(len(skills), 18)
         for skill in skills:
             self.assertEqual(skill.id, skill.name)
             self.assertTrue(skill.description)
@@ -72,7 +81,7 @@ class TestCore(unittest.TestCase):
 
     def test_commands_load(self) -> None:
         commands = secmatrix.load_commands()
-        self.assertEqual({c.name for c in commands}, {"sec-iso-audit", "sec-audit", "sec-pentest", "sec-fix", "sec-pipeline"})
+        self.assertEqual({c.name for c in commands}, {"sec-iso-audit", "sec-sdlc", "sec-audit", "sec-pentest", "sec-fix", "sec-pipeline"})
 
     def test_frontmatter_parser(self) -> None:
         meta, body = secmatrix.parse_frontmatter(
@@ -87,7 +96,7 @@ class TestCore(unittest.TestCase):
 class TestBuild(unittest.TestCase):
     def test_generated_files_in_sync(self) -> None:
         files = secmatrix.build_files("core", secmatrix.TOOLS)
-        self.assertEqual(len(files), 112)
+        self.assertEqual(len(files), 175)
         for path, content in files.items():
             target = ROOT / path
             self.assertTrue(target.exists(), f"falta {path}")
@@ -204,6 +213,7 @@ class TestInstall(unittest.TestCase):
         lines = env.splitlines()
         self.assertIn("TARGET_CONTEXT=../../..", lines)
         self.assertIn("REPORTS_DIR=../../../reports", lines)
+        self.assertIn("SOURCE_DIR=../../..", lines)
 
     def test_install_replaces_symlink_without_following_it(self) -> None:
         victim = self.tmp.parent / f"victima-symlink-{self.tmp.name}.txt"
@@ -481,6 +491,30 @@ class TestAuditLifecycle(unittest.TestCase):
     def test_source_is_not_copied(self) -> None:
         pipeline = (ROOT / "core/pipeline/PIPELINE_ORCHESTRATOR.md").read_text(encoding="utf-8")
         self.assertIn("sin copiarlo", pipeline)
+        compose = (ROOT / "core/sandbox/docker-compose.sandbox.yml").read_text(encoding="utf-8")
+        self.assertIn("${SOURCE_DIR:-../..}:/src:ro", compose)
+
+    def test_sdlc_analysts_cover_required_types(self) -> None:
+        def body(name: str) -> str:
+            return (ROOT / "core/agents/01-ssdlc" / name).read_text(encoding="utf-8")
+
+        sqli = body("07-sqli-analyst.md")
+        for kind in ("Union based", "Error based", "Boolean blind", "Time based"):
+            self.assertIn(kind, sqli)
+        xss = body("08-xss-analyst.md")
+        for kind in ("Reflected", "Stored", "DOM based"):
+            self.assertIn(kind, xss)
+        web = body("09-web-vuln-analyst.md")
+        for kind in ("Fuerza bruta", "Path traversal", "CSRF"):
+            self.assertIn(kind, web)
+        encoding = body("11-output-encoding-csp-reviewer.md")
+        for context in ("Dentro de HTML", "Dentro de script", "En una respuesta JSON", "En URL", "En CSS"):
+            self.assertIn(context, encoding)
+        for level in ("0 — Ausente", "1 — Allowlist", "2 — Nonce/hash", "3 — Estricta"):
+            self.assertIn(level, encoding)
+        lead = body("04-sdlc-security-lead.md")
+        for principle in ("Economía de mecanismo", "Mediación completa", "Mínimo privilegio", "SQUARE", "STRIDE"):
+            self.assertIn(principle, lead)
 
 
 if __name__ == "__main__":

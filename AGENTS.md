@@ -5,7 +5,7 @@ seguridad que genera el toolkit).
 
 ## Qué es este repositorio
 
-`sec-agent-matrix` empaqueta 12 agentes y 12 skills de auditoría de seguridad y
+`sec-agent-matrix` empaqueta 21 agentes y 18 skills de auditoría de seguridad y
 genera adaptadores nativos para Claude Code, Cursor, Codex y OpenCode. La fuente
 única está en `core/`; los directorios de herramientas son artefactos generados.
 

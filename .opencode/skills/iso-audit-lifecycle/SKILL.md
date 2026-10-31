@@ -34,8 +34,10 @@ registro de riesgos ordenado por severidad y recomendaciones de mejora.
    → `reports/AUDIT_PLAN.md`. Lee la tabla "Mapa de cobertura".
 3. **Ejecución automática de la Fase 1.** Para cada agente de Fase 1 marcado
    `Sí`, en este orden y sin pedir confirmación individual:
-   `threat-modeler` → `sast-auditor` → `triage-master` →
-   `itil-process-auditor` → `risk-assessor`.
+   `sdlc-security-lead` → `square-requirements` → `threat-modeler` →
+   `attack-surface-mapper` → `sast-auditor` → `sqli-analyst` → `xss-analyst` →
+   `web-vuln-analyst` → `crypto-reviewer` → `output-encoding-csp-reviewer` →
+   `log-auditor` → `triage-master` → `itil-process-auditor` → `risk-assessor`.
    Los marcados `No` quedan `skipped` en `PIPELINE_STATUS.md` con el motivo del
    plan. Si un agente falla, márcalo `failed` y continúa con los que no dependen
    de él.

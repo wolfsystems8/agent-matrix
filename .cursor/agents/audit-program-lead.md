@@ -53,8 +53,17 @@ Aplícalos en cada decisión y decláralos en el plan:
 
    | Agente | Requerido si… |
    |--------|---------------|
-   | `threat-modeler` | Siempre que haya código o arquitectura |
+   | `sdlc-security-lead` | Hay código de aplicación (CIA, Saltzer & Schroeder, metodología) |
+   | `square-requirements` | El sistema está en diseño o no hay requisitos de seguridad documentados |
+   | `threat-modeler` | Hay arquitectura implementada identificable (STRIDE) |
+   | `attack-surface-mapper` | Hay entradas externas: HTTP, CLI, ficheros, colas, APIs |
    | `sast-auditor` | Hay código fuente propio |
+   | `sqli-analyst` | Hay acceso a base de datos SQL (driver, ORM, consultas) |
+   | `xss-analyst` | Hay salida HTML, plantillas o JavaScript de cliente |
+   | `web-vuln-analyst` | Hay autenticación, acceso a ficheros u operaciones con cookie de sesión |
+   | `crypto-reviewer` | Hay cifrado, firmas, hashing de contraseñas, tokens o TLS propio |
+   | `output-encoding-csp-reviewer` | Hay respuestas web (HTML, JSON) o cabeceras configuradas |
+   | `log-auditor` | Hay logging configurado o logs dentro del alcance |
    | `triage-master` | Algún especialista de Fase 1 produce hallazgos |
    | `itil-process-auditor` | Hay CI/CD, despliegue, runbooks, IaC o gestión de cambios |
    | `risk-assessor` | Siempre (registro de riesgos ISO 27005) |

@@ -34,8 +34,12 @@ humano. No se salta ninguna fase y no se escribe código hasta la Fase 3.
    - Delega en `audit-program-lead` → `reports/AUDIT_PLAN.md` con el mapa de
      cobertura. Ejecuta en automático solo los agentes marcados `Sí`; el resto
      queda `skipped` con motivo (ver skill `iso-audit-lifecycle`).
-   - Delega en `threat-modeler` → `reports/THREAT_MODEL.md`.
-   - Delega en `sast-auditor` → `reports/SAST_RAW_FINDINGS.md`.
+   - Delega en `sdlc-security-lead` y, según su elección,
+     `square-requirements` y/o `threat-modeler` (skill `sdlc-security`).
+   - Delega en `attack-surface-mapper` y `sast-auditor`.
+   - Delega en los analistas: `sqli-analyst`, `xss-analyst`,
+     `web-vuln-analyst`, `crypto-reviewer`, `output-encoding-csp-reviewer`,
+     `log-auditor`.
    - Delega en `triage-master` → `reports/AUDIT_REPORT.md`.
    - Delega en `itil-process-auditor` → `reports/ITIL_PROCESS_AUDIT.md`.
    - Delega en `risk-assessor` → `reports/RISK_REGISTER.md` por severidad.

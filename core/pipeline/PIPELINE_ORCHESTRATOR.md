@@ -43,17 +43,26 @@ solo lo leen; en el sandbox se monta como volumen de solo lectura. Solo la Fase
 
 1. Invocar `audit-program-lead` (inicio) ➔ genera `reports/AUDIT_PLAN.md` con
    el mapa de cobertura (ISO 19011).
-2. Invocar `threat-modeler` ➔ genera `reports/THREAT_MODEL.md`.
-3. Invocar `sast-auditor` ➔ genera `reports/SAST_RAW_FINDINGS.md`.
-4. Invocar `triage-master` ➔ consolida `reports/AUDIT_REPORT.md` con CVSS v3.1.
-5. Invocar `itil-process-auditor` ➔ genera `reports/ITIL_PROCESS_AUDIT.md`.
-6. Invocar `risk-assessor` ➔ genera `reports/RISK_REGISTER.md` (ISO 27005),
-   ordenado por severidad.
-7. **Punto de Control:** presentar el resumen ejecutivo (conteo por nivel de
-   riesgo y top 5) y requerir aprobación del usuario antes de la Fase 2. Si el
-   plan no marca ningún agente de Fase 2, pasar al gate de remediación.
+2. Invocar `sdlc-security-lead` ➔ `reports/SDLC_SECURITY_REVIEW.md` (CIA,
+   Saltzer & Schroeder, elección SQUARE/STRIDE).
+3. Invocar `square-requirements` ➔ `reports/SECURITY_REQUIREMENTS.md`.
+4. Invocar `threat-modeler` ➔ genera `reports/THREAT_MODEL.md`.
+5. Invocar `attack-surface-mapper` ➔ `reports/ATTACK_SURFACE.md`.
+6. Invocar `sast-auditor` ➔ genera `reports/SAST_RAW_FINDINGS.md`.
+7. Invocar los analistas especializados ➔ `sqli-analyst`
+   (`SQLI_FINDINGS.md`), `xss-analyst` (`XSS_FINDINGS.md`), `web-vuln-analyst`
+   (`WEB_VULN_FINDINGS.md`), `crypto-reviewer` (`CRYPTO_REVIEW.md`),
+   `output-encoding-csp-reviewer` (`ENCODING_CSP_REVIEW.md`), `log-auditor`
+   (`LOG_AUDIT.md`).
+8. Invocar `triage-master` ➔ consolida `reports/AUDIT_REPORT.md` con CVSS v3.1.
+9. Invocar `itil-process-auditor` ➔ genera `reports/ITIL_PROCESS_AUDIT.md`.
+10. Invocar `risk-assessor` ➔ genera `reports/RISK_REGISTER.md` (ISO 27005),
+    ordenado por severidad.
+11. **Punto de Control:** presentar el resumen ejecutivo (conteo por nivel de
+    riesgo y top 5) y requerir aprobación del usuario antes de la Fase 2. Si el
+    plan no marca ningún agente de Fase 2, pasar al gate de remediación.
 
-Los pasos 2–6 solo se ejecutan si el mapa de cobertura los marca `Sí`.
+Los pasos 2–10 solo se ejecutan si el mapa de cobertura los marca `Sí`.
 
 ### FASE 2: Verificación Dinámica en Sandbox (Entorno Aislado)
 
@@ -65,7 +74,10 @@ Los pasos 2–6 solo se ejecutan si el mapa de cobertura los marca `Sí`.
    ➔ genera `reports/WEB_DAST_REPORT.md`.
 4. Invocar `exploit-tester` ➔ ejecuta PoCs mínimas para validar los hallazgos
    del SAST, la red y el DAST ➔ consolida `reports/PENTEST_VERIFICATION.md`.
-5. Re-invocar `risk-assessor` ➔ marca `Confirmado` los riesgos verificados.
+5. Exportar los logs del sandbox a `reports/logs/sandbox.log`
+   (`docker compose -f core/sandbox/docker-compose.sandbox.yml logs --no-color`)
+   y, si `log-auditor` está en el plan, re-invocarlo para buscar indicadores.
+6. Re-invocar `risk-assessor` ➔ marca `Confirmado` los riesgos verificados.
 
 ### GATE DE REMEDIACIÓN (siempre)
 

@@ -14,7 +14,17 @@ se valida en el sandbox.
 
 - `reports/THREAT_MODEL.md`
 - `reports/SAST_RAW_FINDINGS.md`
+- Si existen (según el mapa de cobertura): `reports/SDLC_SECURITY_REVIEW.md`,
+  `reports/SECURITY_REQUIREMENTS.md`, `reports/ATTACK_SURFACE.md`,
+  `reports/SQLI_FINDINGS.md`, `reports/XSS_FINDINGS.md`,
+  `reports/WEB_VULN_FINDINGS.md`, `reports/CRYPTO_REVIEW.md`,
+  `reports/ENCODING_CSP_REVIEW.md`, `reports/LOG_AUDIT.md`
 - `core/formatters/VULN_REPORT_TEMPLATE.md`
+
+Los IDs de los especialistas (`SD`, `SQ`, `XS`, `WV`, `CR`, `EN`, `LG`) se
+consolidan en `V-NN` conservando el ID de origen en la columna de referencias.
+En SQLi y XSS mantén el subtipo (union/error/boolean/time; reflected/stored/DOM)
+porque dirige la PoC de la Fase 2.
 
 ## Procedimiento
 

@@ -9,8 +9,8 @@ Clónalo una vez y úsalo en **Claude Code, OpenCode, Codex y Cursor**.
 ![Licencia](https://img.shields.io/badge/licencia-MIT-green)
 ![Python](https://img.shields.io/badge/python-3.9%2B-3776ab)
 ![Dependencias](https://img.shields.io/badge/dependencias-0-brightgreen)
-![Agentes](https://img.shields.io/badge/agentes-12-blue)
-![Skills](https://img.shields.io/badge/skills-12-orange)
+![Agentes](https://img.shields.io/badge/agentes-21-blue)
+![Skills](https://img.shields.io/badge/skills-18-orange)
 
 ![Claude Code](https://img.shields.io/badge/Claude_Code-✓-d97757)
 ![OpenCode](https://img.shields.io/badge/OpenCode-✓-1f6feb)
@@ -35,10 +35,12 @@ con **gates humanos** entre ellas.
 ┌───────────┐    ┌──────────────┐    ┌───────────────┐     ┌──────────────┐    ┌───────────┐
 │ Scope     │    │ Plan 19011   │    │ Sandbox       │     │ Patcher      │    │ Informe   │
 │ Autoriza- │    │ Mapa agentes │    │ Red / TLS     │     │ Parches      │    │ 19011     │
-│ ción      │    │ STRIDE·SAST  │    │ DAST web/API  │     │ mínimos      │    │ Teardown  │
-│           │───▶│ Triage CVSS  │─◆─▶│ PoCs éticas   │─ ◆ ─▶│ Regresión QA │───▶│ Repo      │
-│ reports/  │    │ ITIL 4       │GATE│ Confirmación  │ GATE │ Re-PoC       │    │ limpio    │
-│           │    │ Riesgos 27005│ 1  │               │  2   │              │    │           │
+│ ción      │    │ CIA·S&S      │    │ DAST web/API  │     │ mínimos      │    │ Teardown  │
+│           │    │ SQUARE/STRIDE│    │ PoCs éticas   │     │ Regresión QA │    │ Repo      │
+│           │───▶│ SQLi·XSS·CSRF│─◆─▶│ Confirmación  │─ ◆ ─▶│ Re-PoC       │───▶│ limpio    │
+│ reports/  │    │ Cripto·CSP   │GATE│ Logs sandbox  │ GATE │              │    │           │
+│           │    │ Logs·ITIL 4  │ 1  │               │  2   │              │    │           │
+│           │    │ Riesgos 27005│    │               │      │              │    │           │
 └───────────┘    └──────────────┘    └───────────────┘     └──────────────┘    └───────────┘
    escribe          solo lectura        solo lectura +        escribe código       solo lectura
    reports/         + reports/          reports/ + sandbox    (solo con "sí")
@@ -91,10 +93,16 @@ Sin alcance escrito ningún agente ejecuta pruebas dinámicas.
 
 | Herramienta | Invocación |
 |-------------|------------|
-| **Claude Code** | `/sec-iso-audit` · `/sec-audit` · `/sec-pentest` · `/sec-fix` · `/sec-pipeline` |
-| **OpenCode** | `/sec-iso-audit` · `/sec-audit` · `/sec-pentest` · `/sec-fix` · `/sec-pipeline` |
-| **Codex** | `Usa la skill $iso-audit-lifecycle` · `Usa la skill $security-audit-pipeline` |
-| **Cursor** | `/sec-iso-audit` · `/sec-audit` · `/threat-modeler` |
+| **Claude Code** | `/sec-iso-audit` · `/sec-sdlc` · `/sec-audit` · `/sec-pentest` · `/sec-fix` · `/sec-pipeline` |
+| **OpenCode** | `/sec-iso-audit` · `/sec-sdlc` · `/sec-audit` · `/sec-pentest` · `/sec-fix` · `/sec-pipeline` |
+| **Codex** | `Usa la skill $iso-audit-lifecycle` · `$sdlc-security` · `$security-audit-pipeline` |
+| **Cursor** | `/sec-iso-audit` · `/sec-sdlc` · `/sec-audit` · `/threat-modeler` |
+
+| Ciclo | Comando | Qué hace |
+|-------|---------|----------|
+| Auditoría de sistemas | `/sec-iso-audit` | ISO 19011 de inicio a seguimiento, riesgos ISO 27005 ordenados por severidad, procesos ITIL 4 |
+| Seguridad en el SDLC | `/sec-sdlc` | CIA, Saltzer & Schroeder, SQUARE/STRIDE, SQLi, XSS, fuerza bruta, path traversal, CSRF, cripto, encoding/CSP, logs |
+| Completo | `/sec-pipeline` | Ambos ciclos + pentest en sandbox + gate "¿corregir? sí/no" |
 
 ## 📥 Usarlo en otro proyecto
 
@@ -116,7 +124,7 @@ a `AGENTS.md` y `CLAUDE.md`.
 
 ### Skills globales en OpenCode
 
-Carga las 12 skills en cualquier proyecto desde
+Carga las 18 skills en cualquier proyecto desde
 `~/.config/opencode/opencode.jsonc`:
 
 ```jsonc
@@ -170,8 +178,17 @@ Modelo de datos: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 | Fase | ID | Autoridad | Salida |
 |------|----|-----------|--------|
 | 1 | `audit-program-lead` | read-only | `AUDIT_PLAN.md`, `ISO19011_AUDIT_REPORT.md` |
-| 1 | `threat-modeler` | read-only | `THREAT_MODEL.md` |
+| 1 | `sdlc-security-lead` | read-only | `SDLC_SECURITY_REVIEW.md` (CIA, Saltzer & Schroeder) |
+| 1 | `square-requirements` | read-only | `SECURITY_REQUIREMENTS.md` (SQUARE) |
+| 1 | `threat-modeler` | read-only | `THREAT_MODEL.md` (STRIDE) |
+| 1 | `attack-surface-mapper` | read-only | `ATTACK_SURFACE.md` (vectores de ataque) |
 | 1 | `sast-auditor` | read-only | `SAST_RAW_FINDINGS.md` |
+| 1 | `sqli-analyst` | read-only | `SQLI_FINDINGS.md` (union, error, boolean, time) |
+| 1 | `xss-analyst` | read-only | `XSS_FINDINGS.md` (reflected, stored, DOM) |
+| 1 | `web-vuln-analyst` | read-only | `WEB_VULN_FINDINGS.md` (fuerza bruta, path traversal, CSRF) |
+| 1 | `crypto-reviewer` | read-only | `CRYPTO_REVIEW.md` (simétrica, asimétrica) |
+| 1 | `output-encoding-csp-reviewer` | read-only | `ENCODING_CSP_REVIEW.md` (5 contextos, CSP 0–3) |
+| 1 | `log-auditor` | read-only | `LOG_AUDIT.md` (auth, app, red, web, SO) |
 | 1 | `triage-master` | read-only | `AUDIT_REPORT.md` |
 | 1 | `itil-process-auditor` | read-only | `ITIL_PROCESS_AUDIT.md` |
 | 1 | `risk-assessor` | read-only | `RISK_REGISTER.md` (ISO 27005) |
@@ -193,6 +210,12 @@ Cursor y Codex con instrucciones más el gate humano.
 | `iso-audit-lifecycle` | Auditoría de sistemas ISO 19011 de inicio a seguimiento |
 | `risk-assessment-iso27005` | Tabla de riesgos ordenada por severidad y tratamiento |
 | `itil-process-audit` | Madurez de prácticas ITIL 4 (cambios, despliegue, incidentes…) |
+| `sdlc-security` | CIA, Saltzer & Schroeder, SQUARE o STRIDE, riesgo por fase del SDLC |
+| `injection-xss-analysis` | SQLi y XSS por tipo, con línea exacta y evaluación de filtros ante evasión |
+| `web-vuln-identification` | Vectores de ataque y exposición a XSS, SQLi, fuerza bruta, path traversal, CSRF |
+| `crypto-review` | Criptografía simétrica y asimétrica, hashing, RNG, JWT, claves |
+| `output-encoding-csp` | Encoding en HTML, script, JSON, URL y CSS; CSP en 4 niveles |
+| `security-log-analysis` | Logs de autenticación, aplicación, red, servidor web y SO |
 | `security-audit-pipeline` | Auditoría completa con gates |
 | `threat-modeling` | STRIDE sobre arquitectura |
 | `sast-code-audit` | Revisión estática con CWE/ASVS |
@@ -223,6 +246,9 @@ sh core/sandbox/scripts/teardown.sh                                           # 
 
 Para auditar una app propia define `TARGET_CONTEXT` (y `TARGET_DOCKERFILE` /
 `TARGET_PORT` si aplica) en `core/sandbox/.env`; la app debe exponer `:8080`.
+El código se monta en `pentest-runner` como `/src` de **solo lectura**
+(`SOURCE_DIR`, por defecto la raíz del proyecto): no se copia y ninguna
+herramienta del sandbox puede modificarlo.
 
 Detalle: [`core/sandbox/README.md`](core/sandbox/README.md).
 
@@ -251,9 +277,9 @@ Guía completa: [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`docs/USAGE.md`](docs/U
 ```text
 sec-agent-matrix/
 ├── core/                       ← fuente única
-│   ├── agents/                 ← 12 agentes (00-audit-program, 01-ssdlc, 02-pentest, 03-remediation)
-│   ├── skills/                 ← 12 skills portables
-│   ├── commands/               ← 5 comandos /sec-*
+│   ├── agents/                 ← 21 agentes (00-audit-program, 01-ssdlc, 02-pentest, 03-remediation)
+│   ├── skills/                 ← 18 skills portables
+│   ├── commands/               ← 6 comandos /sec-*
 │   ├── ethics/                 ← directiva global
 │   ├── pipeline/               ← orquestador
 │   ├── formatters/             ← plantillas de reportes
