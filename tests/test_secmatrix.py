@@ -74,7 +74,7 @@ class TestCore(unittest.TestCase):
 
     def test_skills_load(self) -> None:
         skills = secmatrix.load_skills()
-        self.assertEqual(len(skills), 18)
+        self.assertEqual(len(skills), 19)
         for skill in skills:
             self.assertEqual(skill.id, skill.name)
             self.assertTrue(skill.description)
@@ -82,7 +82,7 @@ class TestCore(unittest.TestCase):
 
     def test_commands_load(self) -> None:
         commands = secmatrix.load_commands()
-        self.assertEqual({c.name for c in commands}, {"sec-iso-audit", "sec-sdlc", "sec-audit", "sec-pentest", "sec-fix", "sec-pipeline"})
+        self.assertEqual({c.name for c in commands}, {"sec-task", "sec-iso-audit", "sec-sdlc", "sec-audit", "sec-pentest", "sec-fix", "sec-pipeline"})
 
     def test_frontmatter_parser(self) -> None:
         meta, body = secmatrix.parse_frontmatter(
@@ -97,7 +97,7 @@ class TestCore(unittest.TestCase):
 class TestBuild(unittest.TestCase):
     def test_generated_files_in_sync(self) -> None:
         files = secmatrix.build_files("core", secmatrix.TOOLS)
-        self.assertEqual(len(files), 175)
+        self.assertEqual(len(files), 182)
         for path, content in files.items():
             target = ROOT / path
             self.assertTrue(target.exists(), f"falta {path}")
@@ -516,6 +516,27 @@ class TestAuditLifecycle(unittest.TestCase):
         lead = body("04-sdlc-security-lead.md")
         for principle in ("Economy of mechanism", "Complete mediation", "Least privilege", "SQUARE", "STRIDE"):
             self.assertIn(principle, lead)
+
+
+class TestTaskRouter(unittest.TestCase):
+    """Una petición puntual activa solo los agentes necesarios."""
+
+    def test_router_covers_every_agent(self) -> None:
+        router = (ROOT / "core/skills/security-task-router/SKILL.md").read_text(encoding="utf-8")
+        table = router.split("2. **Match intents to agents**", 1)[1].split("3. **Resolve dependencies.**", 1)[0]
+        for agent in secmatrix.load_agents():
+            if agent.id in ("triage-master",):
+                continue  # se añade al consolidar, no por intención
+            self.assertIn(f"`{agent.id}`", table, agent.id)
+
+    def test_router_handles_ambiguity_and_gate(self) -> None:
+        router = (ROOT / "core/skills/security-task-router/SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("Ambiguous", router)
+        self.assertIn("Do you want to fix the vulnerabilities found?", router)
+        self.assertIn("not requested", router)
+        pipeline = (ROOT / "core/pipeline/PIPELINE_ORCHESTRATOR.md").read_text(encoding="utf-8")
+        self.assertIn("Task routing (first step)", pipeline)
+        self.assertIn("security-task-router", pipeline)
 
 
 class TestDefinitionsLanguage(unittest.TestCase):

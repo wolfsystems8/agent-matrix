@@ -10,7 +10,7 @@ Clónalo una vez y úsalo en **Claude Code, OpenCode, Codex y Cursor**.
 ![Python](https://img.shields.io/badge/python-3.9%2B-3776ab)
 ![Dependencias](https://img.shields.io/badge/dependencias-0-brightgreen)
 ![Agentes](https://img.shields.io/badge/agentes-21-blue)
-![Skills](https://img.shields.io/badge/skills-18-orange)
+![Skills](https://img.shields.io/badge/skills-19-orange)
 
 ![Claude Code](https://img.shields.io/badge/Claude_Code-✓-d97757)
 ![OpenCode](https://img.shields.io/badge/OpenCode-✓-1f6feb)
@@ -56,6 +56,13 @@ El código auditado se analiza **en su sitio, sin copiarlo**, y el agente
 `audit-program-lead` decide qué subagentes hacen falta: los necesarios se
 ejecutan en automático y el resto se omite con motivo.
 
+Los agentes se eligen de dos formas:
+
+- **Por tarea:** `security-task-router` convierte una petición puntual
+  (*"¿hay SQLi en la búsqueda?"*) en los agentes justos y sus dependencias.
+- **Por proyecto:** en una auditoría completa, `audit-program-lead` arma el mapa
+  de cobertura según lo que contiene el repositorio.
+
 ---
 
 ## ✨ Por qué existe
@@ -94,13 +101,14 @@ Sin alcance escrito ningún agente ejecuta pruebas dinámicas.
 
 | Herramienta | Invocación |
 |-------------|------------|
-| **Claude Code** | `/sec-iso-audit` · `/sec-sdlc` · `/sec-audit` · `/sec-pentest` · `/sec-fix` · `/sec-pipeline` |
-| **OpenCode** | `/sec-iso-audit` · `/sec-sdlc` · `/sec-audit` · `/sec-pentest` · `/sec-fix` · `/sec-pipeline` |
-| **Codex** | `Usa la skill $iso-audit-lifecycle` · `$sdlc-security` · `$security-audit-pipeline` |
-| **Cursor** | `/sec-iso-audit` · `/sec-sdlc` · `/sec-audit` · `/threat-modeler` |
+| **Claude Code** | `/sec-task` · `/sec-iso-audit` · `/sec-sdlc` · `/sec-audit` · `/sec-pentest` · `/sec-fix` · `/sec-pipeline` |
+| **OpenCode** | `/sec-task` · `/sec-iso-audit` · `/sec-sdlc` · `/sec-audit` · `/sec-pentest` · `/sec-fix` · `/sec-pipeline` |
+| **Codex** | `Usa la skill $security-task-router` · `$iso-audit-lifecycle` · `$sdlc-security` · `$security-audit-pipeline` |
+| **Cursor** | `/sec-task` · `/sec-iso-audit` · `/sec-sdlc` · `/sec-audit` · `/threat-modeler` |
 
 | Ciclo | Comando | Qué hace |
 |-------|---------|----------|
+| Tarea puntual | `/sec-task <petición>` | Ejecuta solo los agentes que la petición necesita (p. ej. *"revisa XSS en el login"*) y termina en el gate sí/no |
 | Auditoría de sistemas | `/sec-iso-audit` | ISO 19011 de inicio a seguimiento, riesgos ISO 27005 ordenados por severidad, procesos ITIL 4 |
 | Seguridad en el SDLC | `/sec-sdlc` | CIA, Saltzer & Schroeder, SQUARE/STRIDE, SQLi, XSS, fuerza bruta, path traversal, CSRF, cripto, encoding/CSP, logs |
 | Completo | `/sec-pipeline` | Ambos ciclos + pentest en sandbox + gate "¿corregir? sí/no" |
@@ -125,7 +133,7 @@ a `AGENTS.md` y `CLAUDE.md`.
 
 ### Skills globales en OpenCode
 
-Carga las 18 skills en cualquier proyecto desde
+Carga las 19 skills en cualquier proyecto desde
 `~/.config/opencode/opencode.jsonc`:
 
 ```jsonc
@@ -208,6 +216,7 @@ Cursor y Codex con instrucciones más el gate humano.
 
 | Skill | Cuándo usarla |
 |-------|---------------|
+| `security-task-router` | Enruta una petición puntual a los agentes justos |
 | `iso-audit-lifecycle` | Auditoría de sistemas ISO 19011 de inicio a seguimiento |
 | `risk-assessment-iso27005` | Tabla de riesgos ordenada por severidad y tratamiento |
 | `itil-process-audit` | Madurez de prácticas ITIL 4 (cambios, despliegue, incidentes…) |
@@ -279,8 +288,8 @@ Guía completa: [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`docs/USAGE.md`](docs/U
 sec-agent-matrix/
 ├── core/                       ← fuente única
 │   ├── agents/                 ← 21 agentes (00-audit-program, 01-ssdlc, 02-pentest, 03-remediation)
-│   ├── skills/                 ← 18 skills portables
-│   ├── commands/               ← 6 comandos /sec-*
+│   ├── skills/                 ← 19 skills portables
+│   ├── commands/               ← 7 comandos /sec-*
 │   ├── ethics/                 ← directiva global
 │   ├── pipeline/               ← orquestador
 │   ├── formatters/             ← plantillas de reportes

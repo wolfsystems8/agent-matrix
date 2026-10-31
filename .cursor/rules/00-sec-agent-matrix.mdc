@@ -17,7 +17,8 @@ task, read and follow `core/ethics/ETHICAL_DIRECTIVE.md`.
   language.
 - Sandbox: `core/sandbox/docker-compose.sandbox.yml` (internal network, no
   egress, source mounted read-only).
-- Available skills: `security-audit-pipeline`, `iso-audit-lifecycle`,
+- Available skills: `security-task-router`, `security-audit-pipeline`,
+  `iso-audit-lifecycle`,
   `risk-assessment-iso27005`, `itil-process-audit`, `sdlc-security`,
   `injection-xss-analysis`, `web-vuln-identification`, `crypto-review`,
   `output-encoding-csp`, `security-log-analysis`, `threat-modeling`,
@@ -27,7 +28,8 @@ task, read and follow `core/ethics/ETHICAL_DIRECTIVE.md`.
 - Authorization: without `reports/ENGAGEMENT_SCOPE.md` no dynamic tests run.
   A target outside `sandbox_net` is never tested.
 
-Commands (Claude Code, Cursor, OpenCode): `/sec-iso-audit`, `/sec-sdlc`,
-`/sec-audit`, `/sec-pentest`, `/sec-fix`, `/sec-pipeline`. In Codex, invoke the
-skills `$iso-audit-lifecycle`, `$sdlc-security` or `$security-audit-pipeline`.
+Commands (Claude Code, Cursor, OpenCode): `/sec-task`, `/sec-iso-audit`,
+`/sec-sdlc`, `/sec-audit`, `/sec-pentest`, `/sec-fix`, `/sec-pipeline`. In Codex,
+invoke the skills `$security-task-router`, `$iso-audit-lifecycle`,
+`$sdlc-security` or `$security-audit-pipeline`.
 <!-- sec-agent-matrix:end -->

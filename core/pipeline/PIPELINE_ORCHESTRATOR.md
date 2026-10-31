@@ -21,6 +21,19 @@ file names, commands and technical terms as they are.
 | 3 — Remediation | `secfix-patcher` → `regression-qa` | Patched code, `REMEDIATION_SUMMARY.md` | Code write (only after "yes") |
 | Close | `audit-program-lead` + orchestrator | `ISO19011_AUDIT_REPORT.md`, updated `PIPELINE_STATUS.md`, environment destroyed | Read-only + `reports/` |
 
+## 🧭 Task routing (first step)
+
+Before anything else, classify the user's request:
+
+| Request | Route |
+|---------|-------|
+| Targeted ("check XSS", "review the crypto", "scan the ports") | `security-task-router` skill: run only the agents the request needs, then the remediation gate |
+| Broad ("full audit", "ISO 19011", "pipeline") | The phases below, driven by the coverage map |
+| Ambiguous ("is it secure?") | Ask one question listing the topics; run nothing until answered |
+
+The router never widens the scope on its own, and every route still needs
+`reports/ENGAGEMENT_SCOPE.md`, the stop rules and the remediation gate.
+
 ## 🗺️ Coverage map and automatic execution
 
 `audit-program-lead` writes in `reports/AUDIT_PLAN.md` which specialists are

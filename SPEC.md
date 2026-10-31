@@ -80,7 +80,7 @@ make install TARGET=../mi-app
 
 ## Criterios de aceptación
 
-- [x] `build` produce 175 archivos deterministas.
+- [x] `build` produce 182 archivos deterministas.
 - [x] `validate` pasa sin errores ni avisos.
 - [x] Los 21 TOML de Codex parsean con `tomllib`.
 - [x] `install` crea el layout esperado y es idempotente.
