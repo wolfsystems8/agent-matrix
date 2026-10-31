@@ -66,6 +66,7 @@ ejecutan en automático y el resto se omite con motivo.
 | 🔒 **Guardrails reales** | Red Docker `internal: true`, `cap_drop: ALL`, rootfs de solo lectura y fases con autoridad limitada. |
 | 🚦 **Humano en el circuito** | Dos gates obligatorios y reglas de parada (egreso abierto, Docker ausente, sin autorización). |
 | 📦 **Drop-in** | Los adaptadores están versionados: clonas, abres el repo y ya funciona. |
+| 🌐 **Cualquier modelo, cualquier idioma** | Agentes, skills y orquestador definidos en inglés para que cualquier modelo los ejecute; los reportes salen en el idioma del usuario. |
 | 🧪 **Determinista y sin dependencias** | Mismos fuentes → mismos bytes. Solo Python estándar; CI falla si hay deriva. |
 
 ## 🚀 Inicio rápido
@@ -187,7 +188,7 @@ Modelo de datos: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 | 1 | `xss-analyst` | read-only | `XSS_FINDINGS.md` (reflected, stored, DOM) |
 | 1 | `web-vuln-analyst` | read-only | `WEB_VULN_FINDINGS.md` (fuerza bruta, path traversal, CSRF) |
 | 1 | `crypto-reviewer` | read-only | `CRYPTO_REVIEW.md` (simétrica, asimétrica) |
-| 1 | `output-encoding-csp-reviewer` | read-only | `ENCODING_CSP_REVIEW.md` (5 contextos, CSP 0–3) |
+| 1 | `output-encoding-csp-reviewer` | read-only | `ENCODING_CSP_REVIEW.md` (5 contextos, CSP None/Low/Medium/Strict) |
 | 1 | `log-auditor` | read-only | `LOG_AUDIT.md` (auth, app, red, web, SO) |
 | 1 | `triage-master` | read-only | `AUDIT_REPORT.md` |
 | 1 | `itil-process-auditor` | read-only | `ITIL_PROCESS_AUDIT.md` |
@@ -214,7 +215,7 @@ Cursor y Codex con instrucciones más el gate humano.
 | `injection-xss-analysis` | SQLi y XSS por tipo, con línea exacta y evaluación de filtros ante evasión |
 | `web-vuln-identification` | Vectores de ataque y exposición a XSS, SQLi, fuerza bruta, path traversal, CSRF |
 | `crypto-review` | Criptografía simétrica y asimétrica, hashing, RNG, JWT, claves |
-| `output-encoding-csp` | Encoding en HTML, script, JSON, URL y CSS; CSP en 4 niveles |
+| `output-encoding-csp` | Encoding en HTML, script, JSON, URL y CSS; CSP en 4 niveles (None, Low, Medium, Strict) |
 | `security-log-analysis` | Logs de autenticación, aplicación, red, servidor web y SO |
 | `security-audit-pipeline` | Auditoría completa con gates |
 | `threat-modeling` | STRIDE sobre arquitectura |

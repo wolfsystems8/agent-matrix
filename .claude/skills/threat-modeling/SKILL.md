@@ -1,6 +1,6 @@
 ---
 name: threat-modeling
-description: "Construye un modelo de amenazas STRIDE con fronteras de confianza, activos y amenazas priorizadas. Usar al diseñar un sistema, antes de un SAST o al revisar la arquitectura de autenticación y datos."
+description: "Builds a STRIDE threat model with trust boundaries, assets and prioritized threats. Use when designing a system, before a SAST or when reviewing the authentication and data architecture."
 license: MIT
 compatibility: codex, claude-code, cursor, opencode
 metadata:
@@ -12,37 +12,34 @@ metadata:
 
 ## Overview
 
-Produce `reports/THREAT_MODEL.md` a partir de la arquitectura real del
-repositorio, aplicando STRIDE a cada flujo y priorizando por probabilidad e
-impacto. El detalle operativo está en el agente `threat-modeler`.
+Produces `reports/THREAT_MODEL.md` from the repository's real architecture,
+applying STRIDE to every flow and prioritizing by likelihood and impact. The
+operational detail lives in the `threat-modeler` agent.
 
 ## When to use
 
-- Antes de una auditoría de código o de un pentest.
-- Al diseñar un endpoint, flujo de autenticación o integración nueva.
-- Cuando el usuario pregunta "¿qué puede salir mal?" o pide revisar fronteras de
-  confianza.
+- Before a code audit or a pentest.
+- When designing a new endpoint, authentication flow or integration.
+- When the user asks "what can go wrong?" or wants trust boundaries reviewed.
 
 ## Workflow
 
-1. Localiza puntos de entrada y activos: rutas, handlers, colas, cron, CLI,
-   bases de datos, almacenamiento y terceros.
-2. Dibuja un diagrama Mermaid con actores, componentes y fronteras de confianza.
-3. Para cada flujo, recorre las seis categorías: Spoofing, Tampering,
-   Repudiation, Information Disclosure, Denial of Service, Elevation of
-   Privilege.
-4. Registra para cada amenaza: control actual, control ausente, probabilidad,
-   impacto y propuesta.
-5. Marca explícitamente los supuestos y los vacíos de información; no inventes
-   endpoints.
+1. Locate entry points and assets: routes, handlers, queues, cron, CLI,
+   databases, storage and third parties.
+2. Draw a Mermaid diagram with actors, components and trust boundaries.
+3. For every flow, walk the six categories: Spoofing, Tampering, Repudiation,
+   Information Disclosure, Denial of Service, Elevation of Privilege.
+4. Record for each threat: current control, missing control, likelihood,
+   impact and proposal.
+5. Mark assumptions and information gaps explicitly; never invent endpoints.
 
-## Salida
+## Output
 
-`reports/THREAT_MODEL.md` con resumen, diagrama, matriz STRIDE, top amenazas y
-supuestos.
+`reports/THREAT_MODEL.md` with summary, diagram, STRIDE matrix, top threats and
+assumptions.
 
-## Reglas
+## Rules
 
-- Solo lectura: no modifiques código ni configuración.
-- No ejecutes pruebas dinámicas.
-- Una amenaza sin evidencia se marca como hipótesis, no como hallazgo.
+- Read-only: do not modify code or configuration.
+- Do not run dynamic tests.
+- A threat without evidence is marked as a hypothesis, not a finding.

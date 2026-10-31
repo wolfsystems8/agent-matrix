@@ -1,6 +1,6 @@
 ---
 name: sdlc-security
-description: Revisa la seguridad del ciclo de vida del software con la tríada CIA, los principios de Saltzer & Schroeder y la gestión de riesgos por fase, y aplica SQUARE o STRIDE según el estado del sistema. Usar al empezar una revisión SSDLC o al diseñar un sistema.
+description: Reviews software lifecycle security with the CIA triad, the Saltzer & Schroeder principles and per-phase risk management, and applies SQUARE or STRIDE depending on the system's state. Use when starting an SSDLC review or designing a system.
 license: MIT
 compatibility: codex, claude-code, cursor, opencode
 metadata:
@@ -8,42 +8,41 @@ metadata:
   authority: read-only
 ---
 
-# Seguridad en el SDLC
+# Security in the SDLC
 
 ## Overview
 
-Fija el marco de la revisión antes del análisis de código: activos y CIA,
-principios de diseño seguro, metodología de análisis y riesgo en cada fase del
-ciclo. Lo ejecutan `sdlc-security-lead`, `square-requirements` y
-`threat-modeler`.
+Sets the review frame before the code analysis: assets and CIA, secure design
+principles, analysis methodology and risk in each phase of the lifecycle. Run by
+`sdlc-security-lead`, `square-requirements` and `threat-modeler`.
 
 ## When to use
 
-- Al iniciar una revisión de seguridad de una aplicación.
-- Cuando se diseña un sistema nuevo o faltan requisitos de seguridad.
-- Cuando el usuario pregunta por CIA, Saltzer & Schroeder, SQUARE o STRIDE.
+- When starting a security review of an application.
+- When designing a new system or when security requirements are missing.
+- When the user asks about CIA, Saltzer & Schroeder, SQUARE or STRIDE.
 
 ## Workflow
 
-1. Delega en `sdlc-security-lead` → `reports/SDLC_SECURITY_REVIEW.md`:
-   - Activos clasificados por Confidencialidad, Integridad y Disponibilidad.
-   - Los 8 principios de Saltzer & Schroeder con estado y evidencia.
-   - Metodología elegida y justificación.
-   - Brechas por fase: requisitos, diseño, implementación, verificación,
-     despliegue y mantenimiento.
-2. Según la metodología elegida:
+1. Delegate to `sdlc-security-lead` → `reports/SDLC_SECURITY_REVIEW.md`:
+   - Assets classified by Confidentiality, Integrity and Availability.
+   - The 8 Saltzer & Schroeder principles with status and evidence.
+   - Chosen methodology and justification.
+   - Gaps per phase: requirements, design, implementation, verification,
+     deployment and maintenance.
+2. Depending on the chosen methodology:
 
-   | Elección | Acción |
-   |----------|--------|
-   | SQUARE | `square-requirements` → `reports/SECURITY_REQUIREMENTS.md` (9 pasos, casos de abuso, requisitos `SR-NN`) |
+   | Choice | Action |
+   |--------|--------|
+   | SQUARE | `square-requirements` → `reports/SECURITY_REQUIREMENTS.md` (9 steps, abuse cases, `SR-NN` requirements) |
    | STRIDE | `threat-modeler` → `reports/THREAT_MODEL.md` |
-   | Ambas | Primero SQUARE, luego STRIDE usando los requisitos como criterio |
+   | Both | SQUARE first, then STRIDE using the requirements as criteria |
 
-3. Pasa los activos y requisitos a los analistas de código
+3. Pass assets and requirements to the code analysts
    (`injection-xss-analysis`, `web-vuln-identification`, `crypto-review`).
 
-## Reglas
+## Rules
 
-- Solo lectura; escribe únicamente en `reports/`.
-- Sin evidencia, un principio queda "Sin evidencia", no "No cumple".
-- Los requisitos son verificables y no prescriben la implementación.
+- Read-only; write only to `reports/`.
+- Without evidence, a principle is "No evidence", not "Not met".
+- Requirements are verifiable and do not prescribe the implementation.

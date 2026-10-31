@@ -1,19 +1,22 @@
-# /sec-pipeline — Auditoría completa con gates
+# /sec-pipeline — Full audit with gates
 
-Objetivo: `$ARGUMENTS` (por defecto, el repositorio actual).
+Target: `$ARGUMENTS` (defaults to the current repository).
 
-Ejecuta `security-audit-pipeline` de principio a fin, respetando los gates:
+Run `security-audit-pipeline` end to end, respecting the gates and answering in
+the user's language:
 
-1. **Fase 0:** alcance y autorización en `reports/ENGAGEMENT_SCOPE.md`.
-2. **Fase 1:** `threat-modeler` → `sast-auditor` → `triage-master`.
-   **GATE 1:** pide aprobación.
-3. **Fase 2:** `sandbox-manager` → `network-auditor` → `web-dast-tester` →
+1. **Phase 0:** scope and authorization in `reports/ENGAGEMENT_SCOPE.md`.
+2. **Phase 1:** `audit-program-lead` builds the coverage map; the agents marked
+   `Yes` run automatically (SDLC, specialists, triage, ITIL, risks).
+   **GATE 1:** ask for approval.
+3. **Phase 2:** `sandbox-manager` → `network-auditor` → `web-dast-tester` →
    `exploit-tester`.
-   **GATE 2:** pide autorización para parchear.
-4. **Fase 3:** `secfix-patcher` → `regression-qa`.
-5. **Cierre:** ejecuta `sh core/sandbox/scripts/teardown.sh` (exige
-   `teardown: OK`: sin contenedores, redes, volúmenes ni PoC temporales), resume
-   hallazgos cerrados/parciales/reabiertos y enlaza todos los reportes.
+4. **Remediation gate:** ISO 19011 report, recommendations by severity and the
+   question "Do you want to fix the vulnerabilities found? (yes/no)".
+5. **Phase 3 (only on "yes"):** `secfix-patcher` → `regression-qa`.
+6. **Close:** run `sh core/sandbox/scripts/teardown.sh` (requires
+   `teardown: OK`: no containers, networks, volumes or temporary PoCs),
+   summarize closed/partial/reopened findings and link every report.
 
-No avances de fase sin aprobación explícita. Si detectas una condición de parada
-del orquestador, detente y explícala.
+Never move to the next phase without explicit approval. If an orchestrator stop
+condition is met, stop and explain it.

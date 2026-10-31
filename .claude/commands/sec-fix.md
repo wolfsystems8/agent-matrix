@@ -1,22 +1,24 @@
 ---
-description: "Ejecuta la Fase 3: parchea hallazgos confirmados y valida con tests y PoCs."
+description: "Runs Phase 3: patches the findings the user chose to fix and validates with tests and PoCs."
 argument-hint: "[target]"
 ---
 
-# /sec-fix — Remediación y QA
+# /sec-fix — Remediation and QA
 
-Objetivo: `$ARGUMENTS` (por defecto, los hallazgos confirmados del informe).
+Target: `$ARGUMENTS` (defaults to the findings the user approved).
 
-Precondición: `reports/PENTEST_VERIFICATION.md` con hallazgos **Confirmado** y
-autorización explícita para modificar código. Si no existe, detente.
+Precondition: an explicit "yes" from the user with the IDs to fix, and
+`reports/PENTEST_VERIFICATION.md` with **Confirmed** findings (or static
+findings the user selected). Without the "yes", stop.
 
-Sigue las skills `security-remediation` y `security-regression-qa`:
+Follow the `security-remediation` and `security-regression-qa` skills,
+answering in the user's language:
 
-1. `secfix-patcher` aplica parches mínimos por hallazgo confirmado.
-2. Añade/actualiza un test de regresión por hallazgo.
-3. Ejecuta tests, lint, typecheck y build.
-4. `regression-qa` re-ejecuta las PoCs en el sandbox y emite
+1. `secfix-patcher` applies minimal patches per authorized finding.
+2. Add/update one regression test per finding.
+3. Run tests, lint, typecheck and build.
+4. `regression-qa` re-runs the PoCs in the sandbox and issues
    `reports/REMEDIATION_SUMMARY.md`.
-5. Si un hallazgo se reabre, itera (máx. 3) o escala al usuario.
+5. If a finding is reopened, iterate (max. 3) or escalate to the user.
 
-No toques código no relacionado. No silencies analizadores ni elimines tests.
+Do not touch unrelated code. Do not silence analyzers or delete tests.

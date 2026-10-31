@@ -1,6 +1,6 @@
 ---
 name: output-encoding-csp
-description: "Verifica la codificación de salida específica por contexto (dentro de HTML, dentro de script, en JSON, en URL y en CSS) y clasifica la Content Security Policy en sus 4 niveles. Usar al revisar defensas contra XSS o cabeceras de seguridad."
+description: "Verifies context-specific output encoding (inside HTML, inside script, in JSON, in URL and in CSS) and rates the Content Security Policy on four levels (None, Low, Medium, Strict). Use when reviewing XSS defenses or security headers."
 license: MIT
 compatibility: codex, claude-code, cursor, opencode
 metadata:
@@ -8,44 +8,44 @@ metadata:
   authority: read-only
 ---
 
-# Codificación por contexto y CSP
+# Context-specific encoding and CSP
 
 ## Overview
 
-Buenas prácticas operacionales contra XSS: cada salida se codifica según el
-contexto que la interpreta, y la CSP limita el daño si algo se escapa. Lo
-ejecuta `output-encoding-csp-reviewer` → `reports/ENCODING_CSP_REVIEW.md`.
+Operational best practices against XSS: every output is encoded for the context
+that interprets it, and the CSP limits the damage if something slips through.
+Run by `output-encoding-csp-reviewer` → `reports/ENCODING_CSP_REVIEW.md`.
 
 ## When to use
 
-- Tras encontrar XSS, para definir la corrección exacta.
-- Al revisar plantillas, serialización JSON o cabeceras HTTP.
+- After finding XSS, to define the exact fix.
+- When reviewing templates, JSON serialization or HTTP headers.
 
 ## Workflow
 
-1. **Codificación por contexto:**
+1. **Context-specific encoding:**
 
-   | Contexto | Regla |
-   |----------|-------|
-   | Dentro de HTML | Entidades HTML (autoescape) |
-   | Atributo HTML | Codificación de atributo + comillas |
-   | Dentro de script | No interpolar; pasar datos por JSON/`data-*` y `textContent` |
-   | Respuesta JSON | `application/json`, serializador, sin JSONP; `<` si va embebido en HTML |
-   | URL | `encodeURIComponent` del parámetro + allowlist de esquemas |
-   | CSS | Escape hexadecimal CSS o no insertar datos |
+   | Context | Rule |
+   |---------|------|
+   | Inside HTML | HTML entities (autoescape) |
+   | HTML attribute | Attribute encoding + quotes |
+   | Inside script | Do not interpolate; pass data via JSON/`data-*` and `textContent` |
+   | JSON response | `application/json`, serializer, no JSONP; `<` when embedded in HTML |
+   | URL | `encodeURIComponent` on the parameter + scheme allowlist |
+   | CSS | CSS hex escaping, or no data in CSS |
 
-2. **CSP en 4 niveles:**
+2. **CSP levels:**
 
-   | Nivel | Descripción |
+   | Level | Description |
    |-------|-------------|
-   | 0 | Ausente o solo `Report-Only` |
-   | 1 | Allowlist de dominios con `unsafe-inline`/`unsafe-eval` |
-   | 2 | Nonce o hash, sin `unsafe-inline` |
-   | 3 | Estricta: nonce/hash + `strict-dynamic`, `object-src 'none'`, `base-uri 'none'`, Trusted Types |
+   | None | Missing, or `Report-Only` only |
+   | Low | Domain allowlist with `unsafe-inline`/`unsafe-eval` |
+   | Medium | Nonce or hash, no `unsafe-inline` |
+   | Strict | Nonce/hash + `strict-dynamic`, `object-src 'none'`, `base-uri 'none'`, Trusted Types |
 
-3. Propón la política objetivo (nivel 3) adaptada a la aplicación.
+3. Propose the target policy (Strict) adapted to the application.
 
-## Reglas
+## Rules
 
-- La CSP es defensa en profundidad: no cierra un XSS por sí sola.
-- Solo lectura; escribe únicamente en `reports/`.
+- CSP is defense in depth: it does not close an XSS on its own.
+- Read-only; write only to `reports/`.

@@ -1,6 +1,6 @@
 ---
 name: sast-code-audit
-description: "Audita código fuente en busca de inyecciones, secretos, criptografía débil y fallos de autorización, con archivo y línea. Usar para revisar un repositorio sin ejecutarlo o antes de un pentest."
+description: "Audits source code for injections, secrets, weak cryptography and authorization flaws, with file and line. Use to review a repository without running it or before a pentest."
 license: MIT
 compatibility: codex, claude-code, cursor, opencode
 metadata:
@@ -12,35 +12,35 @@ metadata:
 
 ## Overview
 
-Revisión estática guiada por OWASP Top 10, CWE y ASVS. Genera
-`reports/SAST_RAW_FINDINGS.md` con evidencia verificable y remediación concreta.
-El checklist completo vive en el agente `sast-auditor`.
+Static review guided by OWASP Top 10, CWE and ASVS. Produces
+`reports/SAST_RAW_FINDINGS.md` with verifiable evidence and concrete
+remediation. The full checklist lives in the `sast-auditor` agent.
 
 ## When to use
 
-- El usuario pide "revisar el código en busca de vulnerabilidades".
-- Hay que evaluar un PR o un módulo sensible (auth, pagos, uploads, SQL).
-- Antes de la Fase 2 para dirigir las PoCs.
+- The user asks to "review the code for vulnerabilities".
+- A PR or sensitive module (auth, payments, uploads, SQL) must be assessed.
+- Before Phase 2, to aim the PoCs.
 
 ## Workflow
 
-1. Identifica stack, framework y puntos de entrada.
-2. Revisa en este orden: consultas a datos, ejecución de comandos, renderizado
-   HTML, autenticación/sesión, autorización, uploads, criptografía y secretos.
-3. Para cada candidato, traza el flujo source → sink y comprueba si existe
-   validación o sanitización efectiva.
-4. Ejecuta herramientas disponibles en modo lectura (`semgrep`, `bandit`,
-   `npm audit`, `gosec`) y adjunta el comando.
-5. Descarta falsos positivos con justificación; no los borres sin rastro.
-6. Escribe la tabla de hallazgos con ID `S-NN`, CWE, confianza y remediación.
+1. Identify the stack, framework and entry points.
+2. Review in this order: data queries, command execution, HTML rendering,
+   authentication/session, authorization, uploads, cryptography and secrets.
+3. For every candidate, trace the source → sink flow and check whether there is
+   effective validation or sanitization.
+4. Run available tools read-only (`semgrep`, `bandit`, `npm audit`, `gosec`)
+   and include the command.
+5. Discard false positives with a justification; never delete them silently.
+6. Write the findings table with `S-NN` ID, CWE, confidence and remediation.
 
-## Salida
+## Output
 
 `reports/SAST_RAW_FINDINGS.md`.
 
-## Reglas
+## Rules
 
-- No modifiques código ni ejecutes la aplicación.
-- No reportes sin archivo y línea.
-- Enmascara secretos; reporta ubicación, no valor.
-- Un patrón peligroso sin flujo explotable se marca como "requiere revisión".
+- Do not modify code or run the application.
+- Never report without file and line.
+- Mask secrets; report the location, not the value.
+- A dangerous pattern without an exploitable flow is marked "needs review".

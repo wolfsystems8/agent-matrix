@@ -1,6 +1,6 @@
 ---
 name: web-vuln-identification
-description: Identifica los vectores de ataque y a qué vulnerabilidades web está expuesto el software (XSS, SQLi, fuerza bruta, path traversal, CSRF), con los fundamentos de cada una y la línea exacta. Usar para una clasificación completa de la exposición web.
+description: Identifies attack vectors and which web vulnerabilities the software is exposed to (XSS, SQLi, brute force, path traversal, CSRF), with the fundamentals of each and the exact line. Use for a complete web exposure classification.
 license: MIT
 compatibility: codex, claude-code, cursor, opencode
 metadata:
@@ -8,50 +8,50 @@ metadata:
   authority: read-only
 ---
 
-# Identificación de vulnerabilidades web
+# Web vulnerability identification
 
 ## Overview
 
-Responde "¿a qué está expuesta esta aplicación web?" con técnicas de
-identificación sobre el código: inventario de vectores, rastreo fuente → sink y
-clasificación por tipo. Lo ejecutan `attack-surface-mapper` y
-`web-vuln-analyst`; SQLi y XSS se delegan a `injection-xss-analysis`.
+Answers "what is this web application exposed to?" with identification
+techniques over the code: vector inventory, source → sink tracing and
+classification by type. Run by `attack-surface-mapper` and `web-vuln-analyst`;
+SQLi and XSS are delegated to `injection-xss-analysis`.
 
 ## When to use
 
-- Antes de un pentest web, para dirigirlo.
-- Cuando el usuario pide "qué vulnerabilidades tiene esta web/API".
-- Al revisar autenticación, descarga/subida de ficheros o formularios.
+- Before a web pentest, to aim it.
+- When the user asks "what vulnerabilities does this web app/API have".
+- When reviewing authentication, file download/upload or forms.
 
 ## Workflow
 
-1. **Vectores de ataque** (`attack-surface-mapper`):
+1. **Attack vectors** (`attack-surface-mapper`):
 
-   | Categoría | Ejemplos |
-   |-----------|----------|
-   | Entradas de usuario | Formularios, búsquedas, perfiles |
-   | Parámetros HTTP | Query, cuerpo, path, cabeceras, cookies |
-   | Vectores de carga | Uploads, multipart, comprimidos |
+   | Category | Examples |
+   |----------|----------|
+   | User input | Forms, search, profiles |
+   | HTTP parameters | Query, body, path, headers, cookies |
+   | Payload vectors | Uploads, multipart, archives |
    | APIs | REST, GraphQL, WebSocket, webhooks |
-   | Datos estructurados | JSON, XML, YAML, CSV, objetos serializados |
+   | Structured data | JSON, XML, YAML, CSV, serialized objects |
 
-2. **Técnicas de identificación:** búsqueda de sinks peligrosos, rastreo
-   fuente → sink, revisión de validación (servidor vs. solo cliente),
-   comparación con requisitos (`SR-NN`) y con OWASP ASVS.
-3. **Clasificación de exposición** por vector: XSS, SQLi, fuerza bruta, path
-   traversal, CSRF u otros.
-4. **Fundamentos por tipo** (`web-vuln-analyst` → `reports/WEB_VULN_FINDINGS.md`):
+2. **Identification techniques:** dangerous sink search, source → sink tracing,
+   validation review (server vs. client-only), comparison against requirements
+   (`SR-NN`) and OWASP ASVS.
+3. **Exposure classification** per vector: XSS, SQLi, brute force, path
+   traversal, CSRF or others.
+4. **Fundamentals per type** (`web-vuln-analyst` → `reports/WEB_VULN_FINDINGS.md`):
 
-   | Tipo | Causa raíz | Control correcto |
-   |------|-----------|------------------|
-   | Fuerza bruta | Intentos ilimitados, errores distinguibles | Rate limiting, bloqueo, MFA, hash lento |
-   | Path traversal | Ruta construida con datos del usuario | Ruta canónica bajo directorio base, allowlist |
-   | CSRF | Estado cambiado con cookie sin prueba de intención | Token, `SameSite`, verificación de `Origin` |
-   | SQLi | Concatenación en SQL | Consultas parametrizadas |
-   | XSS | Salida sin codificación por contexto | Autoescape, codificación por contexto, CSP |
+   | Type | Root cause | Correct control |
+   |------|------------|-----------------|
+   | Brute force | Unlimited attempts, distinguishable errors | Rate limiting, lockout, MFA, slow hash |
+   | Path traversal | Path built from user data | Canonical path under a base directory, allowlist |
+   | CSRF | State changed via cookie without proof of intent | Token, `SameSite`, `Origin` check |
+   | SQLi | Concatenation into SQL | Parameterized queries |
+   | XSS | Output without context-specific encoding | Autoescape, context encoding, CSP |
 
-## Reglas
+## Rules
 
-- Solo lectura; escribe únicamente en `reports/`.
-- Un vector sin sink identificado es un supuesto, no un hallazgo.
-- Cada hallazgo indica archivo:línea, vector, CWE y corrección.
+- Read-only; write only to `reports/`.
+- A vector without an identified sink is an assumption, not a finding.
+- Every finding states file:line, vector, CWE and fix.

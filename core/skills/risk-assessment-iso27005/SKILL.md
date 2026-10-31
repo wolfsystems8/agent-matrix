@@ -1,6 +1,6 @@
 ---
 name: risk-assessment-iso27005
-description: Identifica, analiza, evalúa y propone tratamiento de riesgos según ISO/IEC 27005 y genera una tabla de riesgos ordenada por severidad con recomendaciones. Usar tras un SAST/pentest o cuando el usuario pide una matriz o registro de riesgos.
+description: Identifies, analyzes, evaluates and proposes risk treatment per ISO/IEC 27005 and builds a risk table sorted by severity with recommendations. Use after SAST/pentest or when the user asks for a risk matrix or register.
 license: MIT
 compatibility: codex, claude-code, cursor, opencode
 metadata:
@@ -8,46 +8,46 @@ metadata:
   authority: read-only
 ---
 
-# Evaluación y tratamiento de riesgos (ISO/IEC 27005)
+# Risk assessment and treatment (ISO/IEC 27005)
 
 ## Overview
 
-Convierte hallazgos técnicos (`V-NN`, `W-NN`, `N-NN`) y de proceso (`P-NN`) en
-riesgos `R-NN` con probabilidad, impacto, nivel, opción de tratamiento y
-recomendación. El detalle operativo está en el agente `risk-assessor`.
+Turns technical findings (`V-NN`, `W-NN`, `N-NN`) and process findings (`P-NN`)
+into `R-NN` risks with likelihood, impact, level, treatment option and
+recommendation. The operational detail lives in the `risk-assessor` agent.
 
 ## When to use
 
-- Hay reportes de auditoría y hace falta priorizarlos por riesgo de negocio.
-- El usuario pide "matriz de riesgos", "registro de riesgos", "tratamiento de
-  riesgos" o "ISO 27005".
-- Antes de decidir qué corregir primero.
+- There are audit reports and they must be prioritized by business risk.
+- The user asks for a "risk matrix", "risk register", "risk treatment" or
+  "ISO 27005".
+- Before deciding what to fix first.
 
 ## Workflow
 
-1. **Contexto.** Define activos (datos, credenciales, servicios, disponibilidad)
-   y criterios de aceptación: `Bajo` se puede retener; el resto se trata o se
-   acepta de forma explícita.
-2. **Identificación.** Para cada hallazgo construye el escenario
-   activo → amenaza → vulnerabilidad → consecuencia y marca la dimensión CIA.
-   Agrupa los hallazgos que materializan el mismo escenario en un solo riesgo.
-3. **Análisis.** Probabilidad e impacto de 1 a 5, cada uno con su justificación.
-   Un hallazgo confirmado en sandbox sube la probabilidad un nivel.
-4. **Evaluación.** Puntuación = P × I. Crítico 20–25 · Alto 12–19 ·
-   Medio 6–11 · Bajo 1–5.
-5. **Tratamiento.** Modificar, Retener, Evitar o Compartir, con el control de
-   ISO/IEC 27001:2022 Anexo A y el riesgo residual esperado.
-6. **Ordena** de mayor a menor puntuación y escribe `reports/RISK_REGISTER.md`
-   con matriz de calor, registro y recomendaciones agrupadas por nivel.
+1. **Context.** Define assets (data, credentials, services, availability) and
+   acceptance criteria: `Low` may be retained; the rest is treated or
+   explicitly accepted.
+2. **Identification.** For each finding build the scenario
+   asset → threat → vulnerability → consequence and mark the CIA dimension.
+   Group findings that materialize the same scenario into a single risk.
+3. **Analysis.** Likelihood and impact from 1 to 5, each with its justification.
+   A finding confirmed in the sandbox raises likelihood by one level.
+4. **Evaluation.** Score = L × I. Critical 20–25 · High 12–19 ·
+   Medium 6–11 · Low 1–5.
+5. **Treatment.** Modify, Retain, Avoid or Share, with the ISO/IEC 27001:2022
+   Annex A control and the expected residual risk.
+6. **Sort** from highest to lowest score and write `reports/RISK_REGISTER.md`
+   with heat map, register and recommendations grouped by level.
 
-## Ejemplo de fila
+## Example row
 
 ```markdown
-| R-01 | Exfiltración de la BD por SQLi | Datos de clientes | C, I | V-02, W-01 | 5 | 5 | 25 | Crítico | Modificar | A.8.28 Codificación segura | Bajo | Confirmado |
+| R-01 | Database exfiltration via SQLi | Customer data | C, I | V-02, W-01 | 5 | 5 | 25 | Critical | Modify | A.8.28 Secure coding | Low | Confirmed |
 ```
 
-## Reglas
+## Rules
 
-- Sin evidencia no hay riesgo: una hipótesis se registra como tal.
-- No apliques tratamientos; solo recomiéndalos. La decisión es del usuario.
-- Escribe únicamente en `reports/`.
+- No evidence, no risk: a hypothesis is recorded as such.
+- Do not apply treatments; only recommend them. The decision is the user's.
+- Write only to `reports/`.

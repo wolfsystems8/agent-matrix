@@ -1,44 +1,46 @@
-# Plantilla Estándar de Reporte de Vulnerabilidades (CVSS v3.1)
+# Standard Vulnerability Report Template (CVSS v3.1)
 
-## Tabla de hallazgos
+## Findings table
 
-| ID | Metodología / Módulo | Componente / Línea | Vulnerabilidad (CWE) | Vector STRIDE | CVSS v3.1 | Severidad | Estado Sandbox |
+| ID | Methodology / Module | Component / Line | Vulnerability (CWE) | STRIDE vector | CVSS v3.1 | Severity | Sandbox status |
 |---|---|---|---|---|---|---|---|
-| V-01 | SAST | `src/auth.js:42` | SQL Injection (CWE-89) | Tampering | 9.8 `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H` | 🔴 Crítica | Pendiente |
-| V-02 | DAST | `GET /api/users/1` | BOLA / IDOR (CWE-639) | Elevation of Privilege | 8.1 `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | 🟠 Alta | Confirmado |
+| V-01 | SAST | `src/auth.js:42` | SQL Injection (CWE-89) | Tampering | 9.8 `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H` | 🔴 Critical | Pending |
+| V-02 | DAST | `GET /api/users/1` | BOLA / IDOR (CWE-639) | Elevation of Privilege | 8.1 `CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N` | 🟠 High | Confirmed |
 
-## Escala de severidad
+## Severity scale
 
-| CVSS v3.1 | Severidad | SLA sugerido |
-|-----------|-----------|--------------|
-| 9.0 – 10.0 | 🔴 Crítica | 24 h |
-| 7.0 – 8.9 | 🟠 Alta | 7 días |
-| 4.0 – 6.9 | 🟡 Media | 30 días |
-| 0.1 – 3.9 | 🔵 Baja | 90 días |
-| 0.0 | ⚪ Informativa | Backlog |
+| CVSS v3.1 | Severity | Suggested SLA |
+|-----------|----------|---------------|
+| 9.0 – 10.0 | 🔴 Critical | 24 h |
+| 7.0 – 8.9 | 🟠 High | 7 days |
+| 4.0 – 6.9 | 🟡 Medium | 30 days |
+| 0.1 – 3.9 | 🔵 Low | 90 days |
+| 0.0 | ⚪ Informational | Backlog |
 
-## Detalle técnico (repetir por hallazgo)
+## Technical detail (repeat per finding)
 
-### V-01 — SQL Injection en autenticación
+### V-01 — SQL Injection in authentication
 
-- **Ubicación:** `src/auth.js:42`
-- **CWE / Categoría:** CWE-89 — Improper Neutralization of Special Elements used in an SQL Command
-- **Vector STRIDE:** Tampering
+- **Location:** `src/auth.js:42`
+- **CWE / Category:** CWE-89 — Improper Neutralization of Special Elements used in an SQL Command
+- **Subtype:** union based / error based / boolean blind / time based
+- **STRIDE vector:** Tampering
 - **CVSS v3.1:** `9.8` — `CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H`
-- **Descripción:** La consulta se construye por concatenación con el parámetro
-  `email`, lo que permite alterar la cláusula `WHERE` y autenticarse sin
-  credenciales válidas.
-- **Evidencia:** request/respuesta sanitizada o fragmento de código.
-- **Impacto:** lectura/escritura no autorizada en la base de datos.
-- **Remediación sugerida:** usar consultas preparadas con parámetros
-  vinculados; validar el esquema de entrada con Zod/Joi.
-- **Estado sandbox:** Pendiente / Confirmado / Mitigado / Falso positivo.
-- **Referencias:** OWASP ASVS 5.3.4, OWASP Top 10 A03:2021.
+- **Description:** The query is built by concatenating the `email` parameter,
+  which allows altering the `WHERE` clause and authenticating without valid
+  credentials.
+- **Evidence:** sanitized request/response or code snippet.
+- **Impact:** unauthorized read/write access to the database.
+- **Suggested remediation:** use prepared statements with bound parameters;
+  validate the input schema with Zod/Joi.
+- **Sandbox status:** Pending / Confirmed / Mitigated / False positive.
+- **References:** OWASP ASVS 5.3.4, OWASP Top 10 A03:2021.
 
-## Reglas de redacción
+## Writing rules
 
-1. Un hallazgo por sección, con ID estable (`V-01`, `V-02`, …).
-2. No incluir secretos reales ni datos personales; enmascarar.
-3. Todo hallazgo Confirmado debe incluir una PoC reproducible o evidencia.
-4. Todo hallazgo debe incluir una remediación concreta y verificable.
-5. Los falsos positivos se documentan y se justifican, no se eliminan sin rastro.
+1. One finding per section, with a stable ID (`V-01`, `V-02`, …).
+2. No real secrets or personal data; mask them.
+3. Every Confirmed finding includes a reproducible PoC or evidence.
+4. Every finding includes a concrete, verifiable remediation.
+5. False positives are documented and justified, never removed silently.
+6. Write the report in the user's language; keep IDs and technical terms as-is.

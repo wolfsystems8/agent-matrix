@@ -1,6 +1,6 @@
 ---
 name: crypto-review
-description: Revisa criptografía simétrica y asimétrica, hashing de contraseñas, aleatoriedad, JWT, TLS y gestión de claves en el código, con la línea exacta y la alternativa segura. Usar cuando el código cifra, firma, hashea o genera tokens.
+description: Reviews symmetric and asymmetric cryptography, password hashing, randomness, JWT, TLS and key management in code, with the exact line and the secure alternative. Use when the code encrypts, signs, hashes or generates tokens.
 license: MIT
 compatibility: codex, claude-code, cursor, opencode
 metadata:
@@ -8,35 +8,34 @@ metadata:
   authority: read-only
 ---
 
-# Revisión criptográfica
+# Cryptography review
 
 ## Overview
 
-Aplica los fundamentos de criptografía al código real: primitivo correcto,
-configuración correcta y claves protegidas. Lo ejecuta `crypto-reviewer` →
+Applies cryptography fundamentals to real code: right primitive, right
+configuration and protected keys. Run by `crypto-reviewer` →
 `reports/CRYPTO_REVIEW.md`.
 
 ## When to use
 
-- El código usa `cipher`, `encrypt`, `sign`, `hash`, `jwt`, `random`, `ssl`.
-- Se almacenan contraseñas o se generan tokens.
-- Se revisa la gestión de secretos y claves.
+- The code uses `cipher`, `encrypt`, `sign`, `hash`, `jwt`, `random`, `ssl`.
+- Passwords are stored or tokens are generated.
+- Secrets and key management are under review.
 
 ## Workflow
 
-1. Inventaría cada uso criptográfico con archivo:línea.
-2. **Simétrica:** AEAD (AES-GCM, ChaCha20-Poly1305), nonce único, claves de
-   KDF; detecta ECB, CBC sin MAC, IV fijo, algoritmos obsoletos.
-3. **Asimétrica:** RSA ≥ 2048 con OAEP/PSS, ECDSA/Ed25519, validación de
-   certificados; detecta PKCS#1 v1.5, `verify=False`, claves privadas
-   versionadas.
-4. **Hashing:** Argon2id/bcrypt/scrypt para contraseñas; nada de MD5/SHA-1.
-5. **Aleatoriedad:** CSPRNG para tokens y sesiones.
-6. **JWT y TLS:** algoritmo fijado, `alg: none` rechazado, TLS 1.2+.
-7. **Claves:** origen, rotación, separación por entorno; enmascara secretos.
+1. Inventory every cryptographic use with file:line.
+2. **Symmetric:** AEAD (AES-GCM, ChaCha20-Poly1305), unique nonce, KDF-derived
+   keys; detect ECB, CBC without MAC, fixed IV, obsolete algorithms.
+3. **Asymmetric:** RSA ≥ 2048 with OAEP/PSS, ECDSA/Ed25519, certificate
+   validation; detect PKCS#1 v1.5, `verify=False`, versioned private keys.
+4. **Hashing:** Argon2id/bcrypt/scrypt for passwords; no MD5/SHA-1.
+5. **Randomness:** CSPRNG for tokens and sessions.
+6. **JWT and TLS:** pinned algorithm, `alg: none` rejected, TLS 1.2+.
+7. **Keys:** source, rotation, per-environment separation; mask secrets.
 
-## Reglas
+## Rules
 
-- No copies claves ni secretos al reporte.
-- Recomienda librerías mantenidas, nunca criptografía propia.
-- Solo lectura; escribe únicamente en `reports/`.
+- Never copy keys or secrets into the report.
+- Recommend maintained libraries, never home-made cryptography.
+- Read-only; write only to `reports/`.

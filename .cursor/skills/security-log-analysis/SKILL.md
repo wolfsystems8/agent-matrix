@@ -1,6 +1,6 @@
 ---
 name: security-log-analysis
-description: "Evalúa la cobertura de logs de autenticación, aplicación, red, servidor web y sistema operativo, su calidad (sin datos sensibles ni inyección) y detecta indicadores de ataque en logs del alcance. Usar en análisis de seguridad y detección."
+description: "Assesses log coverage for authentication, application, network, web server and operating system, log quality (no sensitive data or injection), and detects attack indicators in in-scope logs. Use in security analysis and detection work."
 license: MIT
 compatibility: codex, claude-code, cursor, opencode
 metadata:
@@ -8,31 +8,30 @@ metadata:
   authority: read-only
 ---
 
-# Análisis de seguridad de logs
+# Security log analysis
 
 ## Overview
 
-Comprueba que el sistema puede detectar e investigar un ataque y, si hay logs
-disponibles, busca indicadores. Lo ejecuta `log-auditor` →
-`reports/LOG_AUDIT.md`.
+Checks that the system can detect and investigate an attack and, if logs are
+available, looks for indicators. Run by `log-auditor` → `reports/LOG_AUDIT.md`.
 
 ## When to use
 
-- En una auditoría que evalúa detección y respuesta.
-- Tras la Fase 2, con los logs del sandbox exportados a `reports/logs/`.
-- Cuando el usuario aporta logs dentro del alcance autorizado.
+- In an audit that assesses detection and response.
+- After Phase 2, with the sandbox logs exported to `reports/logs/`.
+- When the user provides logs within the authorized scope.
 
 ## Workflow
 
-1. **Cobertura** por fuente: autenticación, aplicación, red, servidor web y
-   sistema operativo.
-2. **Calidad:** formato estructurado, marcas de tiempo, correlación, sin
-   secretos ni PII (CWE-532), sin inyección de logs (CWE-117), retención.
-3. **Indicadores:** fuerza bruta, escaneo, SQLi/XSS en URLs, path traversal,
-   escalada en el SO; cada uno con la línea del log como evidencia.
-4. Relaciona cada indicador con los hallazgos `V-NN`/`W-NN` existentes.
+1. **Coverage** by source: authentication, application, network, web server and
+   operating system.
+2. **Quality:** structured format, timestamps, correlation, no secrets or PII
+   (CWE-532), no log injection (CWE-117), retention.
+3. **Indicators:** brute force, scanning, SQLi/XSS in URLs, path traversal, OS
+   escalation; each one with the log line as evidence.
+4. Link each indicator to the existing `V-NN`/`W-NN` findings.
 
-## Reglas
+## Rules
 
-- Solo logs dentro del alcance; enmascara datos personales.
-- Solo lectura; escribe únicamente en `reports/`.
+- Only logs within scope; mask personal data.
+- Read-only; write only to `reports/`.

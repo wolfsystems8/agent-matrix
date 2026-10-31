@@ -1,6 +1,6 @@
 ---
 name: iso-audit-lifecycle
-description: Conduce el ciclo de vida de una auditoría de sistemas según ISO 19011 (plan, mapa de subagentes, ejecución automática, riesgos ISO 27005, procesos ITIL, informe y seguimiento). Usar cuando el usuario pide una "auditoría de sistemas", "auditoría ISO" o un informe de cumplimiento.
+description: Runs the systems audit lifecycle per ISO 19011 (plan, sub-agent coverage map, automatic execution, ISO 27005 risks, ITIL processes, report and follow-up). Use when the user asks for a "systems audit", an "ISO audit" or a compliance report.
 license: MIT
 compatibility: codex, claude-code, cursor, opencode
 metadata:
@@ -8,71 +8,72 @@ metadata:
   authority: read-only
 ---
 
-# Ciclo de vida de auditoría (ISO 19011)
+# Audit lifecycle (ISO 19011)
 
 ## Overview
 
-Coordina una auditoría de sistemas completa sobre el repositorio, en su sitio y
-en solo lectura: el código no se copia ni se modifica. El agente
-`audit-program-lead` decide qué especialistas hacen falta; el resto se omite con
-motivo. El resultado es un informe de auditoría con hallazgos clasificados, un
-registro de riesgos ordenado por severidad y recomendaciones de mejora.
+Coordinates a full systems audit of the repository, in place and read-only: the
+code is neither copied nor modified. The `audit-program-lead` agent decides
+which specialists are needed; the rest are skipped with a reason. The result is
+an audit report with classified findings, a risk register sorted by severity and
+improvement recommendations, written in the user's language.
 
 ## When to use
 
-- "Audita este sistema", "auditoría ISO 19011/27001", "evalúa riesgos",
-  "revisa nuestros procesos de cambio/despliegue".
-- Se necesita evidencia de cumplimiento, no solo una lista de vulnerabilidades.
-- No usar para revisar una sola función (usa `sast-code-audit`).
+- "Audit this system", "ISO 19011/27001 audit", "assess risks", "review our
+  change/deployment processes".
+- Compliance evidence is needed, not just a list of vulnerabilities.
+- Do not use it to review a single function (use `sast-code-audit`).
 
 ## Workflow
 
-1. **Alcance (Fase 0).** Sin `reports/ENGAGEMENT_SCOPE.md` con autorización
-   explícita, detente. Crea `reports/PIPELINE_STATUS.md` desde
+1. **Scope (Phase 0).** Without `reports/ENGAGEMENT_SCOPE.md` with explicit
+   authorization, stop. Create `reports/PIPELINE_STATUS.md` from
    `{{CORE}}/formatters/PIPELINE_STATUS_TEMPLATE.md`.
-2. **Plan y mapa de cobertura.** Delega en `audit-program-lead` (modo inicio)
-   → `reports/AUDIT_PLAN.md`. Lee la tabla "Mapa de cobertura".
-3. **Ejecución automática de la Fase 1.** Para cada agente de Fase 1 marcado
-   `Sí`, en este orden y sin pedir confirmación individual:
+2. **Plan and coverage map.** Delegate to `audit-program-lead` (start mode) →
+   `reports/AUDIT_PLAN.md`. Read the "Coverage map" table.
+3. **Automatic Phase 1 execution.** For every Phase 1 agent marked `Yes`, in
+   this order and without asking for confirmation per agent:
    `sdlc-security-lead` → `square-requirements` → `threat-modeler` →
    `attack-surface-mapper` → `sast-auditor` → `sqli-analyst` → `xss-analyst` →
    `web-vuln-analyst` → `crypto-reviewer` → `output-encoding-csp-reviewer` →
    `log-auditor` → `triage-master` → `itil-process-auditor` → `risk-assessor`.
-   Los marcados `No` quedan `skipped` en `PIPELINE_STATUS.md` con el motivo del
-   plan. Si un agente falla, márcalo `failed` y continúa con los que no dependen
-   de él.
-4. **Gate 1.** Presenta el top 5 de `RISK_REGISTER.md` y el conteo por nivel.
-   Si el plan marca agentes de Fase 2, pide aprobación para el sandbox; si no,
-   pasa directamente al paso 6.
-5. **Fase 2 (si se aprueba).** Ejecuta los agentes de Fase 2 marcados `Sí` vía
-   `sandbox-pentest`. Después re-invoca `risk-assessor` para pasar a
-   `Confirmado` los riesgos verificados.
-6. **Informe.** Delega en `audit-program-lead` (modo cierre) →
+   Agents marked `No` become `skipped` in `PIPELINE_STATUS.md` with the plan's
+   reason. If an agent fails, mark it `failed` and continue with those that do
+   not depend on it.
+4. **Gate 1.** Present the top 5 of `RISK_REGISTER.md` and the count by level.
+   If the plan marks Phase 2 agents, ask for approval to use the sandbox;
+   otherwise go to step 6.
+5. **Phase 2 (if approved).** Run the Phase 2 agents marked `Yes` via
+   `sandbox-pentest`. Then invoke `risk-assessor` again to move verified risks
+   to `Confirmed`.
+6. **Report.** Delegate to `audit-program-lead` (close mode) →
    `reports/ISO19011_AUDIT_REPORT.md`.
-7. **Gate de remediación.** Muestra las recomendaciones por severidad de
-   `RISK_REGISTER.md` y pregunta literalmente:
-   **"¿Deseas corregir las vulnerabilidades halladas? (sí/no)"**
-   - **Sí:** pide qué IDs (todos, por nivel o lista) y ejecuta
-     `security-remediation` y `security-regression-qa` solo sobre ellos.
-   - **No:** registra la decisión en `PIPELINE_STATUS.md` y no toques el código.
-8. **Cierre.** Si hubo sandbox, `sh {{CORE}}/sandbox/scripts/teardown.sh` debe
-   imprimir `teardown: OK`. Entrega el formato de cierre del orquestador.
+7. **Remediation gate.** Show the recommendations by severity from
+   `RISK_REGISTER.md` and ask, in the user's language:
+   **"Do you want to fix the vulnerabilities found? (yes/no)"**
+   - **Yes:** ask which IDs (all, by level or a list) and run
+     `security-remediation` and `security-regression-qa` on those only.
+   - **No:** record the decision in `PIPELINE_STATUS.md` and do not touch the
+     code.
+8. **Close.** If the sandbox was used, `sh {{CORE}}/sandbox/scripts/teardown.sh`
+   must print `teardown: OK`. Deliver the orchestrator's closing format.
 
-## Salidas
+## Outputs
 
-| Archivo | Agente |
-|---------|--------|
+| File | Agent |
+|------|-------|
 | `AUDIT_PLAN.md` | `audit-program-lead` |
-| `THREAT_MODEL.md`, `SAST_RAW_FINDINGS.md`, `AUDIT_REPORT.md` | Fase 1 técnica |
+| `SDLC_SECURITY_REVIEW.md`, `THREAT_MODEL.md`, `SAST_RAW_FINDINGS.md`, specialist reports, `AUDIT_REPORT.md` | Technical Phase 1 |
 | `ITIL_PROCESS_AUDIT.md` | `itil-process-auditor` |
 | `RISK_REGISTER.md` | `risk-assessor` |
 | `ISO19011_AUDIT_REPORT.md` | `audit-program-lead` |
 
-## Reglas
+## Rules
 
-- El código fuente se lee en su sitio. No se copia a otro directorio ni a un
-  contenedor; el sandbox lo monta en solo lectura.
-- Ningún agente de esta skill escribe fuera de `reports/`.
-- Solo se corrige código tras un "sí" explícito en el gate de remediación.
-- IDs estables entre fases: `V-NN` (código), `P-NN` (procesos), `R-NN`
-  (riesgos), `N-NN` (red), `W-NN` (web).
+- The source code is read in place. It is never copied to another directory or
+  into a container; the sandbox mounts it read-only.
+- No agent in this skill writes outside `reports/`.
+- Code is fixed only after an explicit "yes" at the remediation gate.
+- Stable IDs across phases: `V-NN` (code), `P-NN` (processes), `R-NN` (risks),
+  `N-NN` (network), `W-NN` (web).

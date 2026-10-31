@@ -1,23 +1,25 @@
 ---
-description: "Revisión de seguridad del SDLC: CIA, Saltzer & Schroeder, SQUARE/STRIDE, SQLi, XSS, fuerza bruta, path traversal, CSRF, criptografía, encoding/CSP y logs."
+description: "SDLC security review: CIA, Saltzer & Schroeder, SQUARE/STRIDE, SQLi, XSS, brute force, path traversal, CSRF, cryptography, encoding/CSP and logs."
 argument-hint: "[target]"
 ---
 
-# /sec-sdlc — Seguridad en el ciclo de vida del software
+# /sec-sdlc — Security in the software development lifecycle
 
-Objetivo: `$ARGUMENTS` (por defecto, el repositorio actual).
+Target: `$ARGUMENTS` (defaults to the current repository).
 
-1. Exige `reports/ENGAGEMENT_SCOPE.md`. Si el alcance no está claro, pregunta.
-2. Si no existe `reports/AUDIT_PLAN.md`, delega en `audit-program-lead` para el
-   mapa de cobertura.
-3. Ejecuta en automático, en este orden, los agentes marcados `Sí`:
+Answer in the user's language:
+
+1. Require `reports/ENGAGEMENT_SCOPE.md`. If the scope is unclear, ask.
+2. If `reports/AUDIT_PLAN.md` does not exist, delegate to `audit-program-lead`
+   for the coverage map.
+3. Automatically run, in this order, the agents marked `Yes`:
    `sdlc-security-lead` → `square-requirements` → `threat-modeler` →
    `attack-surface-mapper` → `sast-auditor` → `sqli-analyst` → `xss-analyst` →
    `web-vuln-analyst` → `crypto-reviewer` → `output-encoding-csp-reviewer` →
    `log-auditor` → `triage-master` → `risk-assessor`.
-4. Marca el resto `skipped` con su motivo en `reports/PIPELINE_STATUS.md`.
-5. Presenta el conteo por severidad, el top 5 de riesgos con archivo:línea y
-   **detente**: pide aprobación para la Fase 2 si el plan la requiere.
+4. Mark the rest `skipped` with their reason in `reports/PIPELINE_STATUS.md`.
+5. Present the count by severity and the top 5 risks with file:line, then
+   **stop**: ask for approval for Phase 2 if the plan requires it.
 
-No modifiques código fuente ni lo copies. Solo se corrige tras un "sí"
-explícito en el gate de remediación.
+Do not modify or copy the source code. Code is fixed only after an explicit
+"yes" at the remediation gate.

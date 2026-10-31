@@ -1,6 +1,6 @@
 ---
 name: injection-xss-analysis
-description: Detecta SQLi (union, error, boolean blind, time based) y XSS (reflected, stored, DOM) en el código con la línea exacta, analiza patrones como concatenación o validación solo en cliente y evalúa filtros frente a técnicas de evasión. Usar cuando hay consultas SQL o salida HTML/JS.
+description: Detects SQLi (union, error, boolean blind, time based) and XSS (reflected, stored, DOM) in code with the exact line, analyzes patterns such as concatenation or client-only validation, and assesses filters against evasion techniques. Use when there are SQL queries or HTML/JS output.
 license: MIT
 compatibility: codex, claude-code, cursor, opencode
 metadata:
@@ -8,58 +8,57 @@ metadata:
   authority: read-only
 ---
 
-# Análisis de SQLi y XSS
+# SQLi and XSS analysis
 
 ## Overview
 
-Encuentra inyecciones SQL y XSS rastreando cada dato no confiable desde su
-fuente hasta el sink, con archivo y línea exacta, el tipo explotable y la
-corrección. Lo ejecutan `attack-surface-mapper`, `sqli-analyst` y
-`xss-analyst`.
+Finds SQL injection and XSS by tracing every piece of untrusted data from its
+source to its sink, with exact file and line, exploitable type and fix. Run by
+`attack-surface-mapper`, `sqli-analyst` and `xss-analyst`.
 
 ## When to use
 
-- El código construye consultas SQL o genera HTML/JS con datos de usuario.
-- Un SAST genérico marcó inyecciones y hace falta clasificarlas por tipo.
-- Se quiere saber si un filtro o WAF casero protege de verdad.
+- The code builds SQL queries or generates HTML/JS with user data.
+- A generic SAST flagged injections and they need classifying by type.
+- You need to know whether a home-made filter or WAF really protects.
 
 ## Workflow
 
-1. **Superficie.** `attack-surface-mapper` → `reports/ATTACK_SURFACE.md` con
-   los vectores (entradas de usuario, parámetros HTTP, vectores de carga, APIs,
-   datos estructurados) y su exposición.
-2. **Patrones de riesgo** a buscar en cada flujo:
-   - Concatenación de cadenas hacia SQL o HTML.
-   - Falta de validación de entrada en el servidor.
-   - Confianza en la validación del cliente.
-   - Filtros por lista negra.
+1. **Surface.** `attack-surface-mapper` → `reports/ATTACK_SURFACE.md` with the
+   vectors (user input, HTTP parameters, payload vectors, APIs, structured data)
+   and their exposure.
+2. **Risk patterns** to look for in every flow:
+   - String concatenation into SQL or HTML.
+   - Missing server-side input validation.
+   - Trust in client-side validation.
+   - Denylist filters.
 3. **SQLi.** `sqli-analyst` → `reports/SQLI_FINDINGS.md`:
 
-   | Tipo | Se da cuando… |
+   | Type | Happens when… |
    |------|---------------|
-   | Union based | El resultado de la consulta se muestra |
-   | Error based | Los errores del motor llegan al cliente |
-   | Boolean blind | La respuesta cambia con verdadero/falso |
-   | Time based | Solo el tiempo de respuesta varía |
+   | Union based | The query result is shown |
+   | Error based | Engine errors reach the client |
+   | Boolean blind | The response changes with true/false |
+   | Time based | Only the response time varies |
 
 4. **XSS.** `xss-analyst` → `reports/XSS_FINDINGS.md`:
 
-   | Tipo | Flujo |
-   |------|-------|
-   | Reflected | Parámetro → misma respuesta |
-   | Stored | Dato persistido → otra respuesta |
-   | DOM based | Fuente del navegador → sink JS |
+   | Type | Flow |
+   |------|------|
+   | Reflected | Parameter → same response |
+   | Stored | Persisted data → another response |
+   | DOM based | Browser source → JS sink |
 
-5. **Evasión.** Para cada filtro existente, evalúa si resiste las familias de
-   evasión de OWASP (mayúsculas, codificaciones múltiples, comentarios,
-   eliminación no recursiva, etiquetas/eventos alternativos, mXSS). Un filtro
-   que no resiste es "No efectivo"; la corrección es parametrizar o codificar
-   por contexto.
+5. **Evasion.** For every existing filter, assess whether it withstands the
+   OWASP evasion families (case changes, layered encodings, comments,
+   non-recursive stripping, alternative tags/events, mXSS). A filter that does
+   not is "Not effective"; the fix is parameterization or context-specific
+   encoding.
 
-## Reglas
+## Rules
 
-- Análisis estático y de solo lectura: la verificación dinámica es de
-  `web-api-dast` en el sandbox.
-- Se describen técnicas de evasión para evaluar defensas, sin payloads armados
-  ni de extracción de datos.
-- Cada hallazgo lleva archivo:línea, fragmento breve, tipo, CWE y corrección.
+- Static, read-only analysis: dynamic verification belongs to `web-api-dast`
+  in the sandbox.
+- Evasion techniques are described to assess defenses, never as weaponized or
+  data-extraction payloads.
+- Every finding carries file:line, short snippet, type, CWE and fix.
