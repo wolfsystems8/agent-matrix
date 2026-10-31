@@ -30,18 +30,27 @@ humano. No se salta ninguna fase y no se escribe código hasta la Fase 3.
    - Confirma repositorio, propietario, entorno autorizado y ventana.
    - Crea `reports/ENGAGEMENT_SCOPE.md`. Sin este archivo, detente.
    - Crea `reports/PIPELINE_STATUS.md` con todas las fases en `pending`.
-2. **Fase 1 — SSDLC (solo lectura).**
+2. **Fase 1 — Auditoría y SSDLC (solo lectura).**
+   - Delega en `audit-program-lead` → `reports/AUDIT_PLAN.md` con el mapa de
+     cobertura. Ejecuta en automático solo los agentes marcados `Sí`; el resto
+     queda `skipped` con motivo (ver skill `iso-audit-lifecycle`).
    - Delega en `threat-modeler` → `reports/THREAT_MODEL.md`.
    - Delega en `sast-auditor` → `reports/SAST_RAW_FINDINGS.md`.
    - Delega en `triage-master` → `reports/AUDIT_REPORT.md`.
-   - **Gate 1:** presenta resumen por severidad y top 5. Pide aprobación.
+   - Delega en `itil-process-auditor` → `reports/ITIL_PROCESS_AUDIT.md`.
+   - Delega en `risk-assessor` → `reports/RISK_REGISTER.md` por severidad.
+   - **Gate 1:** presenta conteo por nivel de riesgo y top 5. Pide aprobación.
 3. **Fase 2 — Sandbox.**
    - Delega en `sandbox-manager` → `reports/SANDBOX_STATUS.md`.
    - Si el aislamiento no es `true` o hay egreso, detente.
    - Delega en `network-auditor` → `reports/NETWORK_AUDIT.md`.
    - Delega en `web-dast-tester` → `reports/WEB_DAST_REPORT.md`.
    - Delega en `exploit-tester` → `reports/PENTEST_VERIFICATION.md`.
-   - **Gate 2:** muestra confirmados y pide autorización para parchear.
+   - Re-invoca `risk-assessor` para marcar los riesgos confirmados.
+   - **Gate 2 (remediación):** delega en `audit-program-lead` (cierre) →
+     `reports/ISO19011_AUDIT_REPORT.md`, muestra las recomendaciones por
+     severidad y pregunta si se desean corregir. Con "no", salta a la Fase 3
+     como `skipped` y pasa al cierre sin tocar el código.
 4. **Fase 3 — Remediación.**
    - Delega en `secfix-patcher` con los IDs confirmados.
    - Delega en `regression-qa` → `reports/REMEDIATION_SUMMARY.md`.

@@ -26,11 +26,14 @@ SPEC.loader.exec_module(secmatrix)
 class TestCore(unittest.TestCase):
     def test_agents_load(self) -> None:
         agents = secmatrix.load_agents()
-        self.assertEqual(len(agents), 9)
-        self.assertEqual(len({a.id for a in agents}), 9)
+        self.assertEqual(len(agents), 12)
+        self.assertEqual(len({a.id for a in agents}), 12)
         phases = {a.phase for a in agents}
         self.assertEqual(phases, {1, 2, 3})
         expected = {
+            "audit-program-lead",
+            "itil-process-auditor",
+            "risk-assessor",
             "threat-modeler",
             "sast-auditor",
             "triage-master",
@@ -61,7 +64,7 @@ class TestCore(unittest.TestCase):
 
     def test_skills_load(self) -> None:
         skills = secmatrix.load_skills()
-        self.assertEqual(len(skills), 9)
+        self.assertEqual(len(skills), 12)
         for skill in skills:
             self.assertEqual(skill.id, skill.name)
             self.assertTrue(skill.description)
@@ -69,7 +72,7 @@ class TestCore(unittest.TestCase):
 
     def test_commands_load(self) -> None:
         commands = secmatrix.load_commands()
-        self.assertEqual({c.name for c in commands}, {"sec-audit", "sec-pentest", "sec-fix", "sec-pipeline"})
+        self.assertEqual({c.name for c in commands}, {"sec-iso-audit", "sec-audit", "sec-pentest", "sec-fix", "sec-pipeline"})
 
     def test_frontmatter_parser(self) -> None:
         meta, body = secmatrix.parse_frontmatter(
@@ -84,7 +87,7 @@ class TestCore(unittest.TestCase):
 class TestBuild(unittest.TestCase):
     def test_generated_files_in_sync(self) -> None:
         files = secmatrix.build_files("core", secmatrix.TOOLS)
-        self.assertEqual(len(files), 85)
+        self.assertEqual(len(files), 112)
         for path, content in files.items():
             target = ROOT / path
             self.assertTrue(target.exists(), f"falta {path}")
@@ -442,6 +445,42 @@ class TestSandboxHardening(unittest.TestCase):
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("Cierre y alcance", agents)
         self.assertIn("Un análisis terminado no genera trabajo nuevo", agents)
+
+
+class TestAuditLifecycle(unittest.TestCase):
+    """Ciclo ISO 19011 / ISO 27005 / ITIL y gate de remediación."""
+
+    def test_program_lead_maps_every_specialist(self) -> None:
+        lead = (ROOT / "core/agents/00-audit-program/01-audit-program-lead.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("Mapa de cobertura", lead)
+        for agent in secmatrix.load_agents():
+            if agent.id != "audit-program-lead" and agent.phase in (1, 2):
+                self.assertIn(f"`{agent.id}`", lead, agent.id)
+
+    def test_risk_register_is_ordered_by_severity(self) -> None:
+        risk = (ROOT / "core/agents/00-audit-program/03-risk-assessor.md").read_text(
+            encoding="utf-8"
+        )
+        for level in ("Crítico", "Alto", "Medio", "Bajo"):
+            self.assertIn(level, risk)
+        self.assertIn("puntuación descendente", risk)
+        self.assertIn("RISK_REGISTER.md", risk)
+
+    def test_remediation_requires_explicit_yes(self) -> None:
+        question = "¿Deseas corregir las vulnerabilidades halladas? (sí/no)"
+        for path in (
+            "core/pipeline/PIPELINE_ORCHESTRATOR.md",
+            "core/skills/iso-audit-lifecycle/SKILL.md",
+        ):
+            text = (ROOT / path).read_text(encoding="utf-8")
+            self.assertIn(question, text, path)
+            self.assertIn("**No:**", text, path)
+
+    def test_source_is_not_copied(self) -> None:
+        pipeline = (ROOT / "core/pipeline/PIPELINE_ORCHESTRATOR.md").read_text(encoding="utf-8")
+        self.assertIn("sin copiarlo", pipeline)
 
 
 if __name__ == "__main__":

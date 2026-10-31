@@ -10,10 +10,24 @@ entre fases. Ninguna fase se salta y ninguna fase escribe fuera de su autoridad.
 
 | Fase | Agentes | Artefactos de salida | Autoridad |
 |------|---------|----------------------|-----------|
-| 1 — SSDLC | `threat-modeler` → `sast-auditor` → `triage-master` | `THREAT_MODEL.md`, `SAST_RAW_FINDINGS.md`, `AUDIT_REPORT.md` | Solo lectura + `reports/` |
+| 1 — Auditoría y SSDLC | `audit-program-lead` → `threat-modeler` → `sast-auditor` → `triage-master` → `itil-process-auditor` → `risk-assessor` | `AUDIT_PLAN.md`, `THREAT_MODEL.md`, `SAST_RAW_FINDINGS.md`, `AUDIT_REPORT.md`, `ITIL_PROCESS_AUDIT.md`, `RISK_REGISTER.md` | Solo lectura + `reports/` |
 | 2 — Pentest | `sandbox-manager` → `network-auditor` → `web-dast-tester` → `exploit-tester` | `SANDBOX_STATUS.md`, `NETWORK_AUDIT.md`, `WEB_DAST_REPORT.md`, `PENTEST_VERIFICATION.md` | Solo lectura + `reports/` + scripts de sandbox |
 | 3 — Remediación | `secfix-patcher` → `regression-qa` | Código parcheado, `REMEDIATION_SUMMARY.md` | Escritura de código |
-| Cierre | orchestrator | `PIPELINE_STATUS.md` actualizado, entorno destruido | Solo lectura + `reports/` |
+| Cierre | `audit-program-lead` + orchestrator | `ISO19011_AUDIT_REPORT.md`, `PIPELINE_STATUS.md` actualizado, entorno destruido | Solo lectura + `reports/` |
+
+## 🗺️ Mapa de cobertura y ejecución automática
+
+`audit-program-lead` escribe en `reports/AUDIT_PLAN.md` qué especialistas son
+necesarios según la evidencia del repositorio. Dentro de una fase aprobada, el
+orquestador ejecuta **en automático y en orden** los agentes marcados `Sí`, sin
+pedir confirmación por agente, y marca los `No` como `skipped` con el motivo del
+plan. Los gates entre fases siguen siendo obligatorios.
+
+## 📂 Acceso al código fuente
+
+El código auditado se analiza **en su sitio y sin copiarlo**. Las Fases 1 y 2
+solo lo leen; en el sandbox se monta como volumen de solo lectura. Solo la Fase
+3 escribe en él, y solo tras un "sí" explícito en el gate de remediación.
 
 ## 🔄 Flujo de Trabajo Secuencial
 
@@ -27,11 +41,19 @@ entre fases. Ninguna fase se salta y ninguna fase escribe fuera de su autoridad.
 
 ### FASE 1: Análisis Estático y Modelo de Amenazas (Solo Lectura)
 
-1. Invocar `threat-modeler` ➔ genera `reports/THREAT_MODEL.md`.
-2. Invocar `sast-auditor` ➔ genera `reports/SAST_RAW_FINDINGS.md`.
-3. Invocar `triage-master` ➔ consolida `reports/AUDIT_REPORT.md` con CVSS v3.1.
-4. **Punto de Control:** presentar el resumen ejecutivo (conteo por severidad y
-   top 5 hallazgos) y requerir aprobación del usuario antes de la Fase 2.
+1. Invocar `audit-program-lead` (inicio) ➔ genera `reports/AUDIT_PLAN.md` con
+   el mapa de cobertura (ISO 19011).
+2. Invocar `threat-modeler` ➔ genera `reports/THREAT_MODEL.md`.
+3. Invocar `sast-auditor` ➔ genera `reports/SAST_RAW_FINDINGS.md`.
+4. Invocar `triage-master` ➔ consolida `reports/AUDIT_REPORT.md` con CVSS v3.1.
+5. Invocar `itil-process-auditor` ➔ genera `reports/ITIL_PROCESS_AUDIT.md`.
+6. Invocar `risk-assessor` ➔ genera `reports/RISK_REGISTER.md` (ISO 27005),
+   ordenado por severidad.
+7. **Punto de Control:** presentar el resumen ejecutivo (conteo por nivel de
+   riesgo y top 5) y requerir aprobación del usuario antes de la Fase 2. Si el
+   plan no marca ningún agente de Fase 2, pasar al gate de remediación.
+
+Los pasos 2–6 solo se ejecutan si el mapa de cobertura los marca `Sí`.
 
 ### FASE 2: Verificación Dinámica en Sandbox (Entorno Aislado)
 
@@ -43,8 +65,17 @@ entre fases. Ninguna fase se salta y ninguna fase escribe fuera de su autoridad.
    ➔ genera `reports/WEB_DAST_REPORT.md`.
 4. Invocar `exploit-tester` ➔ ejecuta PoCs mínimas para validar los hallazgos
    del SAST, la red y el DAST ➔ consolida `reports/PENTEST_VERIFICATION.md`.
-5. **Punto de Control:** mostrar hallazgos confirmados y solicitar autorización
-   explícita para parchear.
+5. Re-invocar `risk-assessor` ➔ marca `Confirmado` los riesgos verificados.
+
+### GATE DE REMEDIACIÓN (siempre)
+
+1. Invocar `audit-program-lead` (cierre) ➔ genera
+   `reports/ISO19011_AUDIT_REPORT.md`.
+2. Presentar las recomendaciones de mejora por severidad de `RISK_REGISTER.md`
+   y preguntar: **"¿Deseas corregir las vulnerabilidades halladas? (sí/no)"**.
+3. **Sí:** pedir qué IDs (todos, por nivel o lista) y pasar a la Fase 3 solo con
+   ellos. **No:** registrar la decisión en `PIPELINE_STATUS.md`, marcar la Fase
+   3 `skipped` y pasar al cierre sin tocar el código.
 
 ### FASE 3: Remediación y QA (Escritura Habilitada)
 

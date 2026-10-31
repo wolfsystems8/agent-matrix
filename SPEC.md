@@ -80,9 +80,9 @@ make install TARGET=../mi-app
 
 ## Criterios de aceptación
 
-- [x] `build` produce 85 archivos deterministas.
+- [x] `build` produce 112 archivos deterministas.
 - [x] `validate` pasa sin errores ni avisos.
-- [x] Los 9 TOML de Codex parsean con `tomllib`.
+- [x] Los 12 TOML de Codex parsean con `tomllib`.
 - [x] `install` crea el layout esperado y es idempotente.
 - [x] Un archivo conflictivo requiere `--force`.
 - [x] `--dry-run` no escribe nada.

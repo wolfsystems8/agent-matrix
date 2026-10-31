@@ -415,19 +415,21 @@ def rules_markdown(core: str) -> str:
 Este proyecto incluye el pipeline **sec-agent-matrix**. Antes de cualquier tarea
 de seguridad, lee y respeta `{core}/ethics/ETHICAL_DIRECTIVE.md`.
 
-- Fases: SSDLC (solo lectura) → Pentest en sandbox → Remediación (escritura).
+- Fases: Auditoría ISO 19011 + SSDLC (solo lectura) → Pentest en sandbox →
+  Remediación (escritura, solo tras un "sí" explícito).
 - Pipeline completo: `{core}/pipeline/PIPELINE_ORCHESTRATOR.md`.
 - Reportes: `reports/` (único destino de escritura en Fases 1 y 2).
 - Sandbox: `{core}/sandbox/docker-compose.sandbox.yml` (red interna, sin egreso).
-- Skills disponibles: `security-audit-pipeline`, `threat-modeling`,
+- Skills disponibles: `security-audit-pipeline`, `iso-audit-lifecycle`,
+  `risk-assessment-iso27005`, `itil-process-audit`, `threat-modeling`,
   `sast-code-audit`, `vulnerability-triage`, `sandbox-pentest`,
   `network-tls-audit`, `web-api-dast`, `security-remediation`,
   `security-regression-qa`.
 - Autorización: sin `reports/ENGAGEMENT_SCOPE.md` no se ejecutan pruebas
   dinámicas. Nunca se prueba un objetivo fuera de `sandbox_net`.
 
-Comandos (Claude Code, Cursor, OpenCode): `/sec-audit`, `/sec-pentest`,
-`/sec-fix`, `/sec-pipeline`. En Codex, invoca la skill
+Comandos (Claude Code, Cursor, OpenCode): `/sec-iso-audit`, `/sec-audit`,
+`/sec-pentest`, `/sec-fix`, `/sec-pipeline`. En Codex, invoca la skill
 `$security-audit-pipeline`.
 <!-- sec-agent-matrix:end -->"""
 
@@ -664,8 +666,8 @@ def cmd_validate(args: argparse.Namespace) -> int:
         print(f"ERROR: no se pudo cargar core/: {exc}")
         return 1
 
-    if len(agents) != 9:
-        errors.append(f"se esperaban 9 agentes, hay {len(agents)}")
+    if len(agents) != 12:
+        errors.append(f"se esperaban 12 agentes, hay {len(agents)}")
 
     ids: set[str] = set()
     for agent in agents:
