@@ -1,60 +1,63 @@
-# Alcance y autorización del engagement
+# Engagement scope and authorization
 
-> Completar antes de ejecutar cualquier prueba dinámica. Sin este archivo, la
-> Fase 2 está bloqueada.
+> Fill in before running any dynamic test. Without this file, Phase 2 is
+> blocked.
 
-## 1. Identificación
+## 1. Identification
 
-| Campo | Valor |
+| Field | Value |
 |-------|-------|
-| Proyecto / repositorio | |
-| Propietario del sistema | |
-| Responsable de la auditoría | |
-| Fecha de autorización | |
-| Ventana de pruebas | |
-| Contacto de emergencia | |
+| Project / repository | |
+| System owner | |
+| Audit lead | |
+| Authorization date | |
+| Test window | |
+| Emergency contact | |
 
-## 2. Autorización
+## 2. Authorization
 
-Declaración (marcar y firmar):
+Statement (check and sign):
 
-- [ ] Confirmo que soy propietario del sistema o tengo autorización escrita para
-      auditarlo.
-- [ ] Las pruebas se limitarán al entorno de sandbox definido en
+- [ ] I confirm I own the system or have written authorization to audit it.
+- [ ] Tests will be limited to the sandbox environment defined in
       `docker-compose.sandbox.yml`.
-- [ ] No se probarán sistemas, dominios ni IPs de terceros.
-- [ ] No se realizarán pruebas destructivas ni de denegación de servicio.
-- [ ] Los datos y secretos encontrados se tratarán de forma confidencial.
+- [ ] No third-party systems, domains or IPs will be tested.
+- [ ] No destructive or denial-of-service tests will be performed.
+- [ ] Data and secrets found will be treated confidentially.
+- [ ] Source code will be analyzed in place (read-only) and changed only if I
+      answer "yes" at the remediation gate.
 
-Firma / registro: ______________________________________________
+Signature / record: ______________________________________________
 
-## 3. Alcance técnico
+## 3. Technical scope
 
-| Elemento | Incluido | Notas |
-|----------|----------|-------|
-| Código fuente (SAST) | Sí | |
-| Aplicación web (DAST) | Sí | |
-| APIs REST/GraphQL | Sí | |
-| Red y servicios del sandbox | Sí | |
-| Infraestructura cloud | No | |
-| Ingeniería social | No | |
-| DoS / fuerza bruta | No | Prohibido |
+| Item | Included | Notes |
+|------|----------|-------|
+| Systems audit (ISO 19011 / 27005 / ITIL) | Yes | |
+| Source code (SAST) | Yes | |
+| Web application (DAST) | Yes | |
+| REST/GraphQL APIs | Yes | |
+| Sandbox network and services | Yes | |
+| Logs (paths) | | |
+| Cloud infrastructure | No | |
+| Social engineering | No | |
+| DoS / brute force | No | Forbidden |
 
-## 4. Objetivos y exclusiones
+## 4. Objectives and exclusions
 
-- Objetivo principal:
-- Componentes críticos:
-- Excluidos explícitamente:
+- Main objective:
+- Critical components:
+- Explicitly excluded:
 
-## 5. Datos de prueba
+## 5. Test data
 
-- Cuentas de prueba:
-- Datos sintéticos permitidos:
-- Prohibido: datos reales de clientes, PII, secretos de producción.
+- Test accounts:
+- Allowed synthetic data:
+- Forbidden: real customer data, PII, production secrets.
 
-## 6. Criterios de parada
+## 6. Stop criteria
 
-- Detección de tráfico fuera de `sandbox_net`.
-- Indisponibilidad del objetivo.
-- Acceso accidental a datos reales.
-- Cualquier acción que pueda tener impacto fuera del sandbox.
+- Traffic detected outside `sandbox_net`.
+- Target unavailable.
+- Accidental access to real data.
+- Any action that could have an impact outside the sandbox.

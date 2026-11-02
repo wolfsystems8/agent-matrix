@@ -1,144 +1,209 @@
 # Master Pipeline Orchestrator
 
-## 🎯 Objetivo
+## 🎯 Objective
 
-Coordinar la secuencia de auditoría estática, verificación dinámica y
-remediación de código en tres fases aisladas, con puntos de control humanos
-entre fases. Ninguna fase se salta y ninguna fase escribe fuera de su autoridad.
+Coordinate the systems audit, static analysis, dynamic verification and code
+remediation in isolated phases, with human checkpoints between phases. No phase
+is skipped and no phase writes outside its authority.
 
-## 📋 Artefactos por fase
+## 🌐 Language
 
-| Fase | Agentes | Artefactos de salida | Autoridad |
-|------|---------|----------------------|-----------|
-| 1 — SSDLC | `threat-modeler` → `sast-auditor` → `triage-master` | `THREAT_MODEL.md`, `SAST_RAW_FINDINGS.md`, `AUDIT_REPORT.md` | Solo lectura + `reports/` |
-| 2 — Pentest | `sandbox-manager` → `network-auditor` → `web-dast-tester` → `exploit-tester` | `SANDBOX_STATUS.md`, `NETWORK_AUDIT.md`, `WEB_DAST_REPORT.md`, `PENTEST_VERIFICATION.md` | Solo lectura + `reports/` + scripts de sandbox |
-| 3 — Remediación | `secfix-patcher` → `regression-qa` | Código parcheado, `REMEDIATION_SUMMARY.md` | Escritura de código |
-| Cierre | orchestrator | `PIPELINE_STATUS.md` actualizado, entorno destruido | Solo lectura + `reports/` |
+These definitions are in English so any model can run them. Write reports and
+every message to the user **in the language the user writes in**. Keep IDs,
+file names, commands and technical terms as they are.
 
-## 🔄 Flujo de Trabajo Secuencial
+## 📋 Artifacts per phase
 
-### FASE 0: Alcance y autorización (obligatoria)
+| Phase | Agents | Output artifacts | Authority |
+|-------|--------|------------------|-----------|
+| 1 — Audit and SSDLC | `audit-program-lead` → `sdlc-security-lead` → `square-requirements` → `threat-modeler` → `attack-surface-mapper` → `sast-auditor` → specialists → `triage-master` → `itil-process-auditor` → `risk-assessor` | `AUDIT_PLAN.md`, `SDLC_SECURITY_REVIEW.md`, `SECURITY_REQUIREMENTS.md`, `THREAT_MODEL.md`, `ATTACK_SURFACE.md`, `SAST_RAW_FINDINGS.md`, specialist reports, `AUDIT_REPORT.md`, `ITIL_PROCESS_AUDIT.md`, `RISK_REGISTER.md` | Read-only + `reports/` |
+| 2 — Pentest | `sandbox-manager` → `network-auditor` → `web-dast-tester` → `exploit-tester` | `SANDBOX_STATUS.md`, `NETWORK_AUDIT.md`, `WEB_DAST_REPORT.md`, `PENTEST_VERIFICATION.md` | Read-only + `reports/` + sandbox scripts |
+| 3 — Remediation | `secfix-patcher` → `regression-qa` | Patched code, `REMEDIATION_SUMMARY.md` | Code write (only after "yes") |
+| Close | `audit-program-lead` + orchestrator | `ISO19011_AUDIT_REPORT.md`, updated `PIPELINE_STATUS.md`, environment destroyed | Read-only + `reports/` |
 
-1. Confirmar con el usuario: repositorio, propietario, entorno y ventana.
-2. Crear `reports/ENGAGEMENT_SCOPE.md` con el alcance autorizado y la
-   declaración de que no se probarán sistemas de terceros.
-3. Verificar que existe `core/ethics/ETHICAL_DIRECTIVE.md` y que se ha leído.
-4. **Gate:** sin alcance escrito no se avanza.
+## 🧭 Task routing (first step)
 
-### FASE 1: Análisis Estático y Modelo de Amenazas (Solo Lectura)
+Before anything else, classify the user's request:
 
-1. Invocar `threat-modeler` ➔ genera `reports/THREAT_MODEL.md`.
-2. Invocar `sast-auditor` ➔ genera `reports/SAST_RAW_FINDINGS.md`.
-3. Invocar `triage-master` ➔ consolida `reports/AUDIT_REPORT.md` con CVSS v3.1.
-4. **Punto de Control:** presentar el resumen ejecutivo (conteo por severidad y
-   top 5 hallazgos) y requerir aprobación del usuario antes de la Fase 2.
+| Request | Route |
+|---------|-------|
+| Targeted ("check XSS", "review the crypto", "scan the ports") | `security-task-router` skill: run only the agents the request needs, then the remediation gate |
+| Broad ("full audit", "ISO 19011", "pipeline") | The phases below, driven by the coverage map |
+| Ambiguous ("is it secure?") | Ask one question listing the topics; run nothing until answered |
 
-### FASE 2: Verificación Dinámica en Sandbox (Entorno Aislado)
+The router never widens the scope on its own, and every route still needs
+`reports/ENGAGEMENT_SCOPE.md`, the stop rules and the remediation gate.
 
-1. Invocar `sandbox-manager` ➔ despliega `docker-compose.sandbox.yml`, verifica
-   aislamiento de red y genera `reports/SANDBOX_STATUS.md`.
-2. Invocar `network-auditor` ➔ escanea puertos, servicios y TLS ➔ genera
+## 🗺️ Coverage map and automatic execution
+
+`audit-program-lead` writes in `reports/AUDIT_PLAN.md` which specialists are
+needed based on evidence in the repository. Within an approved phase, the
+orchestrator runs the agents marked `Yes` **automatically and in order**,
+without asking for confirmation per agent, and marks the `No` ones as `skipped`
+with the plan's reason. Gates between phases remain mandatory.
+
+## 📂 Access to source code
+
+The audited code is analyzed **in place, without copying it**. Phases 1 and 2
+only read it; in the sandbox it is mounted read-only at `/src`. Only Phase 3
+writes to it, and only after an explicit "yes" at the remediation gate.
+
+## 🔄 Sequential workflow
+
+### PHASE 0: Scope and authorization (mandatory)
+
+1. Confirm with the user: repository, owner, environment and test window.
+2. Create `reports/ENGAGEMENT_SCOPE.md` with the authorized scope and the
+   statement that no third-party systems will be tested.
+3. Verify that `core/ethics/ETHICAL_DIRECTIVE.md` exists and has been read.
+4. Create `reports/PIPELINE_STATUS.md` from
+   `core/formatters/PIPELINE_STATUS_TEMPLATE.md`.
+5. **Gate:** without a written scope, do not proceed.
+
+### PHASE 1: Systems audit and static analysis (read-only)
+
+1. Invoke `audit-program-lead` (start) ➔ `reports/AUDIT_PLAN.md` with the
+   coverage map (ISO 19011).
+2. Invoke `sdlc-security-lead` ➔ `reports/SDLC_SECURITY_REVIEW.md` (CIA,
+   Saltzer & Schroeder, SQUARE/STRIDE choice).
+3. Invoke `square-requirements` ➔ `reports/SECURITY_REQUIREMENTS.md`.
+4. Invoke `threat-modeler` ➔ `reports/THREAT_MODEL.md`.
+5. Invoke `attack-surface-mapper` ➔ `reports/ATTACK_SURFACE.md`.
+6. Invoke `sast-auditor` ➔ `reports/SAST_RAW_FINDINGS.md`.
+7. Invoke the specialist analysts ➔ `sqli-analyst` (`SQLI_FINDINGS.md`),
+   `xss-analyst` (`XSS_FINDINGS.md`), `web-vuln-analyst`
+   (`WEB_VULN_FINDINGS.md`), `crypto-reviewer` (`CRYPTO_REVIEW.md`),
+   `output-encoding-csp-reviewer` (`ENCODING_CSP_REVIEW.md`), `log-auditor`
+   (`LOG_AUDIT.md`).
+8. Invoke `triage-master` ➔ consolidates `reports/AUDIT_REPORT.md` with CVSS
+   v3.1.
+9. Invoke `itil-process-auditor` ➔ `reports/ITIL_PROCESS_AUDIT.md`.
+10. Invoke `risk-assessor` ➔ `reports/RISK_REGISTER.md` (ISO 27005), sorted by
+    severity.
+11. **Checkpoint (Gate 1):** present the executive summary (count by risk level
+    and top 5) and require user approval before Phase 2. If the plan marks no
+    Phase 2 agent, go straight to the remediation gate.
+
+Steps 2–10 run only if the coverage map marks them `Yes`.
+
+### PHASE 2: Dynamic verification in the sandbox (isolated environment)
+
+1. Invoke `sandbox-manager` ➔ deploys `docker-compose.sandbox.yml`, verifies
+   network isolation and writes `reports/SANDBOX_STATUS.md`.
+2. Invoke `network-auditor` ➔ maps ports, services and TLS ➔
    `reports/NETWORK_AUDIT.md`.
-3. Invocar `web-dast-tester` ➔ audita cabeceras, CORS, cookies y endpoints API
-   ➔ genera `reports/WEB_DAST_REPORT.md`.
-4. Invocar `exploit-tester` ➔ ejecuta PoCs mínimas para validar los hallazgos
-   del SAST, la red y el DAST ➔ consolida `reports/PENTEST_VERIFICATION.md`.
-5. **Punto de Control:** mostrar hallazgos confirmados y solicitar autorización
-   explícita para parchear.
+3. Invoke `web-dast-tester` ➔ headers, CORS, cookies, SQLi/XSS confirmation and
+   API endpoints ➔ `reports/WEB_DAST_REPORT.md`.
+4. Invoke `exploit-tester` ➔ minimal PoCs to validate SAST, network and DAST
+   findings ➔ `reports/PENTEST_VERIFICATION.md`.
+5. Export the sandbox logs to `reports/logs/sandbox.log`
+   (`docker compose -f core/sandbox/docker-compose.sandbox.yml logs --no-color`)
+   and, if `log-auditor` is in the plan, invoke it again to look for indicators.
+6. Invoke `risk-assessor` again ➔ marks verified risks as `Confirmed`.
 
-### FASE 3: Remediación y QA (Escritura Habilitada)
+### REMEDIATION GATE (always)
 
-1. Invocar `secfix-patcher` ➔ aplica correcciones mínimas sobre los hallazgos
-   confirmados y registra cada cambio.
-2. Invocar `regression-qa` ➔ ejecuta pruebas unitarias/integración y re-ejecuta
-   las PoCs ➔ emite `reports/REMEDIATION_SUMMARY.md`.
-3. Si una PoC sigue pasando, reabrir el hallazgo y volver al paso 1 (máximo 3
-   iteraciones antes de escalar al usuario).
+1. Invoke `audit-program-lead` (close) ➔ `reports/ISO19011_AUDIT_REPORT.md`.
+2. Present the improvement recommendations by severity from
+   `RISK_REGISTER.md` and ask the user, in their language:
+   **"Do you want to fix the vulnerabilities found? (yes/no)"**.
+3. **Yes:** ask which IDs (all, by level or a list) and move to Phase 3 with
+   only those. **No:** record the decision in `PIPELINE_STATUS.md`, mark Phase
+   3 as `skipped` and go to the close without touching the code.
 
-### FASE FINAL: Cierre del entorno (obligatoria)
+### PHASE 3: Remediation and QA (write enabled)
 
-1. Ejecutar `sh core/sandbox/scripts/teardown.sh` desde el host.
-2. Exigir la línea `teardown: OK`: sin contenedores, redes ni volúmenes del
-   proyecto, y sin contenedores/imágenes temporales `secmatrix-poc-*`.
-3. Borrar los artefactos temporales de PoC que no gestione el script
-   (`/tmp/opencode/*`, copias parcheadas, imágenes ad hoc).
-4. Actualizar `reports/PIPELINE_STATUS.md` con el cierre y las rutas de los
-   reportes.
-5. **Gate:** sin este paso el pipeline queda `blocked`; nunca `done`.
+1. Invoke `secfix-patcher` ➔ minimal fixes for the authorized findings, with
+   every change recorded.
+2. Invoke `regression-qa` ➔ runs unit/integration tests and re-runs the PoCs ➔
+   `reports/REMEDIATION_SUMMARY.md`.
+3. If a PoC still succeeds, reopen the finding and go back to step 1 (at most 3
+   iterations before escalating to the user).
 
-## 🔒 Regla de cierre y control de alcance
+### FINAL PHASE: Environment teardown (mandatory)
 
-Un análisis termina cuando se cumplen **todas** las condiciones de cierre. No
-existe un "casi listo": o se cumplen, o el pipeline queda `blocked`.
+1. Run `sh core/sandbox/scripts/teardown.sh` from the host.
+2. Require the line `teardown: OK`: no project containers, networks or volumes,
+   and no temporary `secmatrix-poc-*` containers/images.
+3. Delete temporary PoC artifacts the script does not manage
+   (`/tmp/opencode/*`, patched copies, ad hoc images).
+4. Update `reports/PIPELINE_STATUS.md` with the close and the report paths.
+5. **Gate:** without this step the pipeline is `blocked`; never `done`.
 
-### Condiciones de cierre verificables
+## 🔒 Closure and scope control rule
 
-| # | Condición | Verificación |
+An analysis ends when **all** closure conditions are met. There is no "almost
+done": either they are met, or the pipeline is `blocked`.
+
+### Verifiable closure conditions
+
+| # | Condition | Verification |
 |---|-----------|--------------|
-| 1 | Todos los IDs del alcance tienen estado final | `AUDIT_REPORT.md`: cada `V-NN`/`N-NN`/`W-NN` en `Mitigado`, `Aceptado` o `Falso positivo`; ninguno en `Pendiente` |
-| 2 | Remediación re-verificada | `REMEDIATION_SUMMARY.md`: cada ID en `Cerrado`, `Parcial` o `Reabierto` con PoC o test re-ejecutado |
-| 3 | Suite verde | `make check` (o el equivalente del proyecto) sin fallos ni tests omitidos |
-| 4 | Dependencias escaneadas | `DEPENDENCY_SCAN.md` con fecha, herramienta y versión; 0 críticas o cada una justificada |
-| 5 | Entorno destruido | `teardown.sh` imprime `teardown: OK`; 0 contenedores, 0 redes y 0 volúmenes del proyecto |
-| 6 | Estado persistido | `PIPELINE_STATUS.md` con todas las filas en `done` o `skipped` con motivo |
-| 7 | Repo limpio | `git status` sin cambios sin commitear y sin artefactos temporales de PoC |
+| 1 | Every in-scope ID has a final status | `AUDIT_REPORT.md`: every `V-NN`/`N-NN`/`W-NN` is `Mitigated`, `Accepted` or `False positive`; none `Pending` |
+| 2 | Remediation re-verified | `REMEDIATION_SUMMARY.md`: every ID `Closed`, `Partial` or `Reopened` with a re-run PoC or test (or Phase 3 `skipped` after a "no") |
+| 3 | Green suite | `make check` (or the project equivalent) with no failures or skipped tests |
+| 4 | Dependencies scanned | `DEPENDENCY_SCAN.md` with date, tool and version; 0 critical or each one justified |
+| 5 | Environment destroyed | `teardown.sh` prints `teardown: OK`; 0 project containers, 0 networks and 0 volumes |
+| 6 | State persisted | `PIPELINE_STATUS.md` with every row `done` or `skipped` with a reason |
+| 7 | Clean repository | `git status` without uncommitted changes and without temporary PoC artifacts |
 
-Si una condición falla, el estado es `blocked` y se reporta la condición
-concreta. No se declara `done` por aproximación.
+If a condition fails, the status is `blocked` and the specific condition is
+reported. `done` is never declared by approximation.
 
-### Prohibiciones al cerrar
+### Prohibitions at close
 
-- **No reabrir fases cerradas** sin un hallazgo nuevo reproducible y aprobación
-  explícita. "Revisar por si acaso" no es un motivo.
-- **No convertir observaciones en tareas.** Una nota, un falso positivo o un
-  riesgo residual se documenta en el informe; no genera un TODO, un issue ni una
-  fase nueva.
-- **No aplicar cambios "de paso"** (refactors, renombres, estilo, bumps no
-  relacionados) después de declarar el cierre. El alcance es el aprobado.
-- **No proponer trabajo futuro como parte de la entrega.** Lo que quede fuera se
-  registra como `Riesgo residual` o `Fuera de alcance` y se para ahí; no se
-  presenta como "siguiente paso" ni como pregunta abierta.
-- **No re-ejecutar el pipeline** para "confirmar" lo ya confirmado: la evidencia
-  ya está en los reportes.
+- **Do not reopen closed phases** without a new reproducible finding and
+  explicit approval. "Checking just in case" is not a reason.
+- **Do not turn observations into tasks.** A note, a false positive or a
+  residual risk is documented in the report; it does not create a TODO, an
+  issue or a new phase.
+- **Do not apply drive-by changes** (refactors, renames, style, unrelated
+  bumps) after closure is declared. The scope is the approved one.
+- **Do not propose future work as part of the delivery.** Anything left out is
+  recorded as `Residual risk` or `Out of scope` and stops there; it is not
+  presented as a "next step" or an open question.
+- **Do not re-run the pipeline** to "confirm" what is already confirmed: the
+  evidence is already in the reports.
 
-### Ampliación de alcance (excepción)
+### Scope extension (exception)
 
-Solo si el usuario lo pide de forma explícita:
+Only if the user explicitly asks for it:
 
-1. Registrar en `PIPELINE_STATUS.md` la petición, la fecha y el motivo.
-2. Abrir un gate nuevo; sin aprobación, no se ejecuta.
-3. Volver a la fase correspondiente y poner esa fila en `running`.
-4. Al terminar, repetir las condiciones 1–7.
+1. Record the request, date and reason in `PIPELINE_STATUS.md`.
+2. Open a new gate; without approval, nothing runs.
+3. Return to the relevant phase and set that row to `running`.
+4. When done, check conditions 1–7 again.
 
-Un hallazgo nuevo descubierto durante el cierre **no** amplía el alcance por sí
-solo: se documenta y se espera decisión.
+A new finding discovered during closure does **not** extend the scope by
+itself: it is documented and waits for a decision.
 
-### Formato de respuesta al cerrar
+### Closing response format
 
 ```text
-Estado: done | blocked
-Alcance: <IDs cubiertos>
-Evidencia: <rutas a reportes + comando de verificación>
-Cierre: teardown: OK (0 contenedores / 0 redes / 0 volúmenes)
-Fuera de alcance: <nada | lista>
+Status: done | blocked
+Scope: <covered IDs>
+Evidence: <report paths + verification command>
+Teardown: teardown: OK (0 containers / 0 networks / 0 volumes)
+Out of scope: <none | list>
 ```
 
-Sin secciones de "próximos pasos" ni preguntas que impliquen trabajo nuevo.
+No "next steps" sections or questions that imply new work.
 
-## 🛑 Reglas de Parada
+## 🛑 Stop rules
 
-- Objetivo fuera de `sandbox_net` o IP pública resuelta ➔ detener y registrar.
-- Docker no disponible ➔ detener la Fase 2, no improvisar pruebas locales.
-- Falta de autorización en un gate ➔ detener la fase siguiente.
-- Cualquier intento de escritura en código durante Fase 1/2 ➔ bloquear.
-- Resultado destructivo o pérdida de datos ➔ detener todo y reportar.
+- Target outside `sandbox_net` or a resolved public IP ➔ stop and log it.
+- Docker not available ➔ stop Phase 2; never improvise local tests.
+- Missing authorization at a gate ➔ stop the next phase.
+- Any attempt to write code during Phase 1/2 ➔ block it.
+- Destructive result or data loss ➔ stop everything and report.
 
-## 📊 Estado del pipeline
+## 📊 Pipeline status
 
-Mantener `reports/PIPELINE_STATUS.md` con una tabla:
+Keep `reports/PIPELINE_STATUS.md` with a table:
 
-| Fase | Agente | Estado | Artefacto | Timestamp |
-|------|--------|--------|-----------|-----------|
+| Phase | Agent | Status | Artifact | Timestamp |
+|-------|-------|--------|----------|-----------|
 | 1 | threat-modeler | ✅ done | `reports/THREAT_MODEL.md` | 2026-01-01T10:00Z |
 
-Estados permitidos: `pending`, `running`, `blocked`, `done`, `failed`.
+Allowed statuses: `pending`, `running`, `blocked`, `done`, `failed`, `skipped`
+(with a reason).

@@ -47,10 +47,11 @@ El script falla si hay egreso a Internet.
 | `TARGET_DOCKERFILE` | `Dockerfile` | Dockerfile de la app |
 | `TARGET_PORT` | `8080` | Puerto publicado solo en `127.0.0.1` |
 | `REPORTS_DIR` | `../../reports` | Volumen de reportes |
+| `SOURCE_DIR` | `../..` | Código auditado, montado en `pentest-runner:/src` de solo lectura (sin copia) |
 
 > En una instalación (`secmatrix install`), el instalador crea un `.env` en este
-> directorio con `REPORTS_DIR=../../../reports`, que es la ruta correcta desde
-> `.sec-agent-matrix/core/sandbox/` hasta los reportes del proyecto. Si el
+> directorio con `REPORTS_DIR=../../../reports` y `SOURCE_DIR=../../..`, que son las rutas correctas desde
+> `.sec-agent-matrix/core/sandbox/` hasta los reportes y el código del proyecto. Si el
 > proyecto auditado tiene un `Dockerfile` en su raíz, añade también
 > `TARGET_CONTEXT=../../..`. Compose carga ese `.env` automáticamente.
 

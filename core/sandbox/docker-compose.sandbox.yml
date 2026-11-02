@@ -101,6 +101,9 @@ services:
       # agente en el host, no el contenedor.
       - ./scripts:/scripts:ro
       - ${REPORTS_DIR:-../../reports}:/reports:ro
+      # Código auditado en su sitio y de solo lectura: no se copia al
+      # contenedor y ninguna herramienta puede modificarlo.
+      - ${SOURCE_DIR:-../..}:/src:ro
     depends_on:
       target-app:
         condition: service_started

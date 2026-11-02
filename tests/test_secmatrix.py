@@ -7,6 +7,7 @@ import importlib.util
 import io
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -26,11 +27,23 @@ SPEC.loader.exec_module(secmatrix)
 class TestCore(unittest.TestCase):
     def test_agents_load(self) -> None:
         agents = secmatrix.load_agents()
-        self.assertEqual(len(agents), 9)
-        self.assertEqual(len({a.id for a in agents}), 9)
+        self.assertEqual(len(agents), 21)
+        self.assertEqual(len({a.id for a in agents}), 21)
         phases = {a.phase for a in agents}
         self.assertEqual(phases, {1, 2, 3})
         expected = {
+            "audit-program-lead",
+            "itil-process-auditor",
+            "risk-assessor",
+            "sdlc-security-lead",
+            "square-requirements",
+            "attack-surface-mapper",
+            "sqli-analyst",
+            "xss-analyst",
+            "web-vuln-analyst",
+            "crypto-reviewer",
+            "output-encoding-csp-reviewer",
+            "log-auditor",
             "threat-modeler",
             "sast-auditor",
             "triage-master",
@@ -61,7 +74,7 @@ class TestCore(unittest.TestCase):
 
     def test_skills_load(self) -> None:
         skills = secmatrix.load_skills()
-        self.assertEqual(len(skills), 9)
+        self.assertEqual(len(skills), 19)
         for skill in skills:
             self.assertEqual(skill.id, skill.name)
             self.assertTrue(skill.description)
@@ -69,7 +82,7 @@ class TestCore(unittest.TestCase):
 
     def test_commands_load(self) -> None:
         commands = secmatrix.load_commands()
-        self.assertEqual({c.name for c in commands}, {"sec-audit", "sec-pentest", "sec-fix", "sec-pipeline"})
+        self.assertEqual({c.name for c in commands}, {"sec-task", "sec-iso-audit", "sec-sdlc", "sec-audit", "sec-pentest", "sec-fix", "sec-pipeline"})
 
     def test_frontmatter_parser(self) -> None:
         meta, body = secmatrix.parse_frontmatter(
@@ -84,7 +97,7 @@ class TestCore(unittest.TestCase):
 class TestBuild(unittest.TestCase):
     def test_generated_files_in_sync(self) -> None:
         files = secmatrix.build_files("core", secmatrix.TOOLS)
-        self.assertEqual(len(files), 85)
+        self.assertEqual(len(files), 182)
         for path, content in files.items():
             target = ROOT / path
             self.assertTrue(target.exists(), f"falta {path}")
@@ -201,6 +214,7 @@ class TestInstall(unittest.TestCase):
         lines = env.splitlines()
         self.assertIn("TARGET_CONTEXT=../../..", lines)
         self.assertIn("REPORTS_DIR=../../../reports", lines)
+        self.assertIn("SOURCE_DIR=../../..", lines)
 
     def test_install_replaces_symlink_without_following_it(self) -> None:
         victim = self.tmp.parent / f"victima-symlink-{self.tmp.name}.txt"
@@ -408,40 +422,141 @@ class TestSandboxHardening(unittest.TestCase):
 
     def test_pipeline_defines_closure_and_scope_rule(self) -> None:
         pipeline = (ROOT / "core/pipeline/PIPELINE_ORCHESTRATOR.md").read_text(encoding="utf-8")
-        self.assertIn("Regla de cierre y control de alcance", pipeline)
+        self.assertIn("Closure and scope control rule", pipeline)
         # Condiciones verificables: las 7 numeradas en la tabla.
         for condition in (
-            "Todos los IDs del alcance tienen estado final",
-            "Remediación re-verificada",
-            "Suite verde",
-            "Dependencias escaneadas",
-            "Entorno destruido",
-            "Estado persistido",
-            "Repo limpio",
+            "Every in-scope ID has a final status",
+            "Remediation re-verified",
+            "Green suite",
+            "Dependencies scanned",
+            "Environment destroyed",
+            "State persisted",
+            "Clean repository",
         ):
             self.assertIn(condition, pipeline, condition)
         # Prohibiciones explícitas al cerrar.
         for ban in (
-            "No reabrir fases cerradas",
-            "No convertir observaciones en tareas",
-            'No aplicar cambios "de paso"',
-            "No proponer trabajo futuro",
-            "No re-ejecutar el pipeline",
+            "Do not reopen closed phases",
+            "Do not turn observations into tasks",
+            "Do not apply drive-by changes",
+            "Do not propose future work",
+            "Do not re-run the pipeline",
         ):
             self.assertIn(ban, pipeline, ban)
         # La ampliación de alcance exige gate y registro.
-        self.assertIn("Ampliación de alcance (excepción)", pipeline)
-        self.assertIn("Abrir un gate nuevo", pipeline)
-        self.assertIn("Estado: done | blocked", pipeline)
+        self.assertIn("Scope extension (exception)", pipeline)
+        self.assertIn("Open a new gate", pipeline)
+        self.assertIn("Status: done | blocked", pipeline)
 
         skill = (ROOT / "core/skills/security-audit-pipeline/SKILL.md").read_text(
             encoding="utf-8"
         )
-        self.assertIn("Cierre y alcance", skill)
+        self.assertIn("Closure and scope", skill)
         self.assertIn("PIPELINE_ORCHESTRATOR.md", skill)
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("Cierre y alcance", agents)
         self.assertIn("Un análisis terminado no genera trabajo nuevo", agents)
+
+
+class TestAuditLifecycle(unittest.TestCase):
+    """Ciclo ISO 19011 / ISO 27005 / ITIL y gate de remediación."""
+
+    def test_program_lead_maps_every_specialist(self) -> None:
+        lead = (ROOT / "core/agents/00-audit-program/01-audit-program-lead.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("Coverage map", lead)
+        for agent in secmatrix.load_agents():
+            if agent.id != "audit-program-lead" and agent.phase in (1, 2):
+                self.assertIn(f"`{agent.id}`", lead, agent.id)
+
+    def test_risk_register_is_ordered_by_severity(self) -> None:
+        risk = (ROOT / "core/agents/00-audit-program/03-risk-assessor.md").read_text(
+            encoding="utf-8"
+        )
+        for level in ("Critical", "High", "Medium", "Low"):
+            self.assertIn(level, risk)
+        self.assertIn("descending score", risk)
+        self.assertIn("RISK_REGISTER.md", risk)
+
+    def test_remediation_requires_explicit_yes(self) -> None:
+        question = "Do you want to fix the vulnerabilities found? (yes/no)"
+        for path in (
+            "core/pipeline/PIPELINE_ORCHESTRATOR.md",
+            "core/skills/iso-audit-lifecycle/SKILL.md",
+        ):
+            text = (ROOT / path).read_text(encoding="utf-8")
+            self.assertIn(question, text, path)
+            self.assertIn("**No:**", text, path)
+
+    def test_source_is_not_copied(self) -> None:
+        pipeline = (ROOT / "core/pipeline/PIPELINE_ORCHESTRATOR.md").read_text(encoding="utf-8")
+        self.assertIn("without copying it", pipeline)
+        compose = (ROOT / "core/sandbox/docker-compose.sandbox.yml").read_text(encoding="utf-8")
+        self.assertIn("${SOURCE_DIR:-../..}:/src:ro", compose)
+
+    def test_sdlc_analysts_cover_required_types(self) -> None:
+        def body(name: str) -> str:
+            return (ROOT / "core/agents/01-ssdlc" / name).read_text(encoding="utf-8")
+
+        sqli = body("07-sqli-analyst.md")
+        for kind in ("Union based", "Error based", "Boolean blind", "Time based"):
+            self.assertIn(kind, sqli)
+        xss = body("08-xss-analyst.md")
+        for kind in ("Reflected", "Stored", "DOM based"):
+            self.assertIn(kind, xss)
+        web = body("09-web-vuln-analyst.md")
+        for kind in ("Brute force", "Path traversal", "CSRF"):
+            self.assertIn(kind, web)
+        encoding = body("11-output-encoding-csp-reviewer.md")
+        for context in ("Inside HTML", "Inside script", "In a JSON response", "In a URL", "In CSS"):
+            self.assertIn(context, encoding)
+        for level in ("**None**", "**Low**", "**Medium**", "**Strict**"):
+            self.assertIn(level, encoding)
+        lead = body("04-sdlc-security-lead.md")
+        for principle in ("Economy of mechanism", "Complete mediation", "Least privilege", "SQUARE", "STRIDE"):
+            self.assertIn(principle, lead)
+
+
+class TestTaskRouter(unittest.TestCase):
+    """Una petición puntual activa solo los agentes necesarios."""
+
+    def test_router_covers_every_agent(self) -> None:
+        router = (ROOT / "core/skills/security-task-router/SKILL.md").read_text(encoding="utf-8")
+        table = router.split("2. **Match intents to agents**", 1)[1].split("3. **Resolve dependencies.**", 1)[0]
+        for agent in secmatrix.load_agents():
+            if agent.id in ("triage-master",):
+                continue  # se añade al consolidar, no por intención
+            self.assertIn(f"`{agent.id}`", table, agent.id)
+
+    def test_router_handles_ambiguity_and_gate(self) -> None:
+        router = (ROOT / "core/skills/security-task-router/SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("Ambiguous", router)
+        self.assertIn("Do you want to fix the vulnerabilities found?", router)
+        self.assertIn("not requested", router)
+        pipeline = (ROOT / "core/pipeline/PIPELINE_ORCHESTRATOR.md").read_text(encoding="utf-8")
+        self.assertIn("Task routing (first step)", pipeline)
+        self.assertIn("security-task-router", pipeline)
+
+
+class TestDefinitionsLanguage(unittest.TestCase):
+    """Las definiciones que leen los agentes van en inglés."""
+
+    def test_core_definitions_are_english(self) -> None:
+        spanish = re.compile(r"[áéíóúñ¿¡]", re.IGNORECASE)
+        for folder in ("agents", "skills", "commands", "pipeline", "ethics", "formatters"):
+            for path in sorted((ROOT / "core" / folder).rglob("*.md")):
+                text = path.read_text(encoding="utf-8")
+                match = spanish.search(text)
+                self.assertIsNone(match, f"{rel_path(path)}: texto no inglés cerca de {match and text[max(0, match.start() - 30):match.end() + 30]!r}")
+
+    def test_agents_answer_in_user_language(self) -> None:
+        agent = secmatrix.render_agent_claude(secmatrix.load_agents()[0], "core")
+        self.assertIn("in the user's language", agent)
+
+
+def rel_path(path: Path) -> str:
+    return str(path.relative_to(ROOT))
 
 
 if __name__ == "__main__":

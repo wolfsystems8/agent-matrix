@@ -1,6 +1,6 @@
 ---
 name: security-regression-qa
-description: Verifica que los parches cierran las vulnerabilidades y no rompen la aplicación, re-ejecutando tests y PoCs. Usar al final de la remediación para emitir el informe de cierre.
+description: Verifies that patches close the vulnerabilities and do not break the application, re-running tests and PoCs. Use at the end of remediation to issue the closure report.
 license: MIT
 compatibility: codex, claude-code, cursor, opencode
 metadata:
@@ -12,36 +12,36 @@ metadata:
 
 ## Overview
 
-Cierra el ciclo: ejecuta la suite, re-valida las PoCs en el sandbox y emite
-`reports/REMEDIATION_SUMMARY.md` con el estado final de cada hallazgo. El
-procedimiento detallado está en el agente `regression-qa`.
+Closes the loop: runs the suite, re-validates the PoCs in the sandbox and issues
+`reports/REMEDIATION_SUMMARY.md` with the final status of every finding. The
+detailed procedure lives in the `regression-qa` agent.
 
 ## When to use
 
-- Se aplicaron parches de seguridad y hay que verificar que funcionan.
-- Antes de declarar una auditoría terminada o abrir un PR de seguridad.
-- Cuando una PoC debe dejar de reproducirse.
+- Security patches were applied and must be verified.
+- Before declaring an audit finished or opening a security PR.
+- When a PoC must stop reproducing.
 
 ## Workflow
 
-1. Ejecuta la suite del proyecto (`npm test`, `pytest`, `go test ./...`).
-2. Ejecuta lint, typecheck y build si existen.
-3. Re-ejecuta cada `poc_<id>` en el sandbox y compara antes/después.
-4. Prueba los flujos críticos afectados (login, permisos, pagos, uploads).
-5. Marca cada hallazgo: Cerrado, Parcial o Reabierto.
-6. Si hay reabiertos, vuelve a `security-remediation` (máx. 3 iteraciones).
-7. **Cierre obligatorio.** Ejecuta `sh {{CORE}}/sandbox/scripts/teardown.sh` y
-   confirma que imprime `teardown: OK` (sin contenedores, redes ni volúmenes).
-   Documenta el entorno usado en `REMEDIATION_SUMMARY.md`.
+1. Run the project suite (`npm test`, `pytest`, `go test ./...`).
+2. Run lint, typecheck and build if they exist.
+3. Re-run every `poc_<id>` in the sandbox and compare before/after.
+4. Test the affected critical flows (login, permissions, payments, uploads).
+5. Mark each finding: Closed, Partial or Reopened.
+6. If any are reopened, go back to `security-remediation` (max. 3 iterations).
+7. **Mandatory close.** Run `sh {{CORE}}/sandbox/scripts/teardown.sh` and
+   confirm it prints `teardown: OK` (no containers, networks or volumes).
+   Document the environment used in `REMEDIATION_SUMMARY.md`.
 
-## Salida
+## Output
 
 `reports/REMEDIATION_SUMMARY.md`.
 
-## Reglas
+## Rules
 
-- Sin re-ejecución no hay cierre.
-- No adaptes tests para ocultar un fallo real.
-- Si no puedes ejecutar algo, dilo; no asumas éxito.
-- No dejes contenedores ni volúmenes del sandbox en ejecución: el cierre es
-  parte del trabajo, no un extra.
+- No re-run, no closure.
+- Do not adapt tests to hide a real failure.
+- If you cannot run something, say so; never assume success.
+- Do not leave sandbox containers or volumes running: the close is part of the
+  work, not an extra.

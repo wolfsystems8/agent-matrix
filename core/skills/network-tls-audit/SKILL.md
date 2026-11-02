@@ -1,6 +1,6 @@
 ---
 name: network-tls-audit
-description: Audita puertos, servicios, banners, protocolos TLS y certificados dentro del sandbox. Usar para revisar la superficie de red, servicios expuestos y fortaleza del cifrado.
+description: Maps and audits ports, services, banners, TLS protocols and certificates inside the sandbox. Use to review the network surface, exposed services and encryption strength.
 license: MIT
 compatibility: codex, claude-code, cursor, opencode
 metadata:
@@ -12,34 +12,33 @@ metadata:
 
 ## Overview
 
-Descubre la superficie de red del sandbox y evalúa servicios y transporte. El
-detalle de comandos y el formato de reporte están en el agente
-`network-auditor`.
+Discovers the sandbox network surface and assesses services and transport. The
+command detail and report format live in the `network-auditor` agent.
 
 ## When to use
 
-- La aplicación expone puertos o servicios de infraestructura.
-- Hay que verificar TLS, certificados o servicios de datos accesibles.
-- Antes de un DAST, para conocer los endpoints reales.
+- The application exposes ports or infrastructure services.
+- TLS, certificates or reachable data services must be verified.
+- Before a DAST, to learn the real endpoints.
 
 ## Workflow
 
-1. Resuelve hosts y subred desde `pentest-runner`; no salgas de `sandbox_net`.
-2. Escanea TCP completo (`nmap -sT -sV -p-`). UDP y los raw scans (`-sS`,
-   `-sU`) quedan fuera: el runner endurecido no corre como root.
-3. Identifica versiones/banners y servicios innecesarios u obsoletos.
-4. Audita TLS (`ssl-enum-ciphers`, `sslyze`, `openssl`): protocolos obsoletos,
-   suites débiles, validez y cadena del certificado.
-5. Comprueba servicios de datos/colas expuestos sin autenticación usando solo
-   comandos de lectura (`PING`, `nc -z`).
-6. Documenta evidencia (comando + salida) y remediación por hallazgo `N-NN`.
+1. Resolve hosts and subnet from `pentest-runner`; never leave `sandbox_net`.
+2. Full TCP scan (`nmap -sT -sV -p-`). UDP and raw scans (`-sS`, `-sU`) are out:
+   the hardened runner does not run as root.
+3. Identify versions/banners and unnecessary or obsolete services.
+4. Audit TLS (`ssl-enum-ciphers`, `sslyze`, `openssl`): obsolete protocols, weak
+   suites, certificate validity and chain.
+5. Check data services/queues exposed without authentication using read-only
+   commands only (`PING`, `nc -z`).
+6. Document evidence (command + output) and remediation per `N-NN` finding.
 
-## Salida
+## Output
 
 `reports/NETWORK_AUDIT.md`.
 
-## Reglas
+## Rules
 
-- Sin escaneos fuera de `sandbox_net`.
-- Sin DoS, flood, brute force ni exploits.
-- No cambies configuración de red ni del compose.
+- No scans outside `sandbox_net`.
+- No DoS, flooding, brute force or exploits.
+- Do not change the network or compose configuration.

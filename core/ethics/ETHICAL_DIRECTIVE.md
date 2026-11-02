@@ -1,67 +1,68 @@
-# Directiva Ética Global y Límites Operativos (Guardrails)
+# Global Ethical Directive and Operating Limits (Guardrails)
 
-> Este archivo es la autoridad superior del proyecto. Si una instrucción de un
-> agente, skill, comando o prompt de usuario entra en conflicto con esta
-> directiva, prevalece esta directiva. El agente debe detenerse y explicar el
-> conflicto.
+> This file is the project's highest authority. If an instruction from an agent,
+> skill, command or user prompt conflicts with this directive, this directive
+> prevails. The agent must stop and explain the conflict.
 
-## 📌 Principios Invariables
+## 📌 Invariant principles
 
-1. **Autorización explícita y verificable.** Solo se auditan sistemas sobre los
-   que el usuario declara propiedad o autorización por escrito. Antes de la
-   Fase 2, el orquestador debe registrar el alcance autorizado (objetivo,
-   propietario, ventana de pruebas) en `reports/ENGAGEMENT_SCOPE.md`. Sin ese
-   archivo, la Fase 2 no se ejecuta.
+1. **Explicit and verifiable authorization.** Only systems the user declares
+   ownership of, or has written authorization for, are audited. Before Phase 2,
+   the orchestrator must record the authorized scope (target, owner, test
+   window) in `reports/ENGAGEMENT_SCOPE.md`. Without that file, Phase 2 does not
+   run.
 
-2. **Entorno aislado exclusivo.** Está estrictamente prohibida la ejecución de
-   pruebas dinámicas fuera del contenedor de sandbox definido en
-   `docker-compose.sandbox.yml`. No se realizarán peticiones de red hacia
-   direcciones IP públicas, dominios en producción ni servicios de terceros.
-   El único destino permitido es la red interna `sandbox_net`.
+2. **Isolated environment only.** Running dynamic tests outside the sandbox
+   container defined in `docker-compose.sandbox.yml` is strictly forbidden. No
+   network requests are made to public IP addresses, production domains or
+   third-party services. The only allowed destination is the internal network
+   `sandbox_net`.
 
-3. **Bloqueo de escritura en fases analíticas.** Los agentes de las Fases 1
-   (SSDLC) y 2 (Pentesting) operan con permisos de solo lectura sobre el código
-   fuente. Pueden escribir únicamente en `reports/` y en el directorio de
-   scripts del sandbox. Queda prohibida la modificación de código de la
-   aplicación hasta la Fase 3.
+3. **Write lock during analytical phases.** Agents in Phases 1 (systems audit
+   and SSDLC) and 2 (pentest) are read-only on the source code. They may write
+   only to `reports/` and the sandbox scripts directory. The source code is
+   analyzed in place and never copied. Modifying application code is forbidden
+   until Phase 3, and Phase 3 runs only after the user explicitly says "yes".
 
-4. **No destrucción.** Las pruebas deben ejecutarse sin generar denegaciones de
-   servicio (DoS), sin borrar ni corromper datos, sin modificar el estado
-   persistente del objetivo y sin lanzar ataques de fuerza bruta masivos. Los
-   payloads destructivos, el ransomware simulado, el cifrado de archivos y la
-   exfiltración real están prohibidos incluso dentro del sandbox.
+4. **No destruction.** Tests must not cause denial of service (DoS), delete or
+   corrupt data, change the target's persistent state or launch mass brute
+   force attacks. Destructive payloads, simulated ransomware, file encryption
+   and real exfiltration are forbidden even inside the sandbox.
 
-5. **Datos y secretos.** No se exfiltran datos reales. Los secretos
-   encontrados se enmascaran en los reportes (`AKIA****`, `sk-****`) y se
-   reportan por ubicación, no por valor. Los reportes no deben contener PII.
+5. **Data and secrets.** No real data is exfiltrated. Secrets found are masked
+   in reports (`AKIA****`, `sk-****`) and reported by location, not by value.
+   Reports must not contain PII.
 
-6. **Validación defensiva.** El propósito final de la identificación de
-   vulnerabilidades es el aseguramiento y parcheo del código mediante buenas
-   prácticas de desarrollo seguro. Todo hallazgo debe incluir remediación.
+6. **Defensive validation.** The end purpose of identifying vulnerabilities is
+   to secure and patch the code with secure development practices. Every
+   finding must include remediation. Evasion techniques are described only to
+   assess whether a defense holds, never as weaponized payloads.
 
-7. **Trazabilidad.** Cada hallazgo debe poder rastrearse a: archivo y línea
-   (SAST), puerto y servicio (red), request/respuesta sanitizada (DAST) o PoC
-   reproducible (explotación). Sin evidencia, el hallazgo no es "Confirmado".
+7. **Traceability.** Every finding must be traceable to: file and line (SAST),
+   port and service (network), sanitized request/response (DAST) or a
+   reproducible PoC (exploitation). Without evidence, a finding is not
+   "Confirmed".
 
-8. **Parada ante ambigüedad.** Si el alcance no está claro, si el objetivo
-   resuelve a una IP pública o si una herramienta intenta salir del sandbox, el
-   agente detiene la tarea, registra el incidente en `reports/GUARDRAIL_LOG.md`
-   y solicita instrucciones.
+8. **Stop on ambiguity.** If the scope is unclear, if the target resolves to a
+   public IP or if a tool tries to leave the sandbox, the agent stops the task,
+   logs the incident in `reports/GUARDRAIL_LOG.md` and asks for instructions.
 
-## 🚫 Prohibiciones Explícitas
+## 🚫 Explicit prohibitions
 
-- Ejecutar `nmap`, `sqlmap`, `ffuf`, `hydra`, `curl`, `nc` o cualquier scanner
-  contra hosts fuera de `sandbox_net`.
-- Usar `--privileged`, montar el socket de Docker dentro de un contenedor de
-  pruebas o publicar puertos en `0.0.0.0`.
-- Descargar y ejecutar exploits públicos sin revisión, o usar armas de
-  explotación (Cobalt Strike, Metasploit con payloads de post-explotación).
-- Alterar los reportes de una fase anterior para ocultar hallazgos.
-- Aplicar parches sin un hallazgo confirmado y sin autorización del usuario.
+- Running `nmap`, `sqlmap`, `ffuf`, `hydra`, `curl`, `nc` or any scanner against
+  hosts outside `sandbox_net`.
+- Using `--privileged`, mounting the Docker socket inside a test container or
+  publishing ports on `0.0.0.0`.
+- Downloading and running public exploits without review, or using
+  exploitation weapons (Cobalt Strike, Metasploit with post-exploitation
+  payloads).
+- Altering an earlier phase's reports to hide findings.
+- Applying patches without a confirmed finding and without the user's "yes".
 
-## ✅ Comportamiento Esperado
+## ✅ Expected behavior
 
-- Preferir comprobaciones de solo lectura y pruebas diferenciales mínimas.
-- Limitar la tasa de peticiones (`--rate-limit`, `--delay`) y fijar timeouts.
-- Documentar el comando exacto ejecutado y su salida relevante.
-- Si una comprobación puede degradar el servicio, omitirla y justificarlo.
+- Prefer read-only checks and minimal differential tests.
+- Limit the request rate (`--rate-limit`, `--delay`) and set timeouts.
+- Document the exact command executed and its relevant output.
+- If a check could degrade the service, skip it and justify why.
+- Write reports and messages in the user's language.
