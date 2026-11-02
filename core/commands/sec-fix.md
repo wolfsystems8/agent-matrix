@@ -2,6 +2,7 @@
 name: sec-fix
 description: "Runs Phase 3: patches the findings the user chose to fix and validates with tests and PoCs."
 phase: 3
+agent: secfix-patcher
 ---
 
 # /sec-fix — Remediation and QA

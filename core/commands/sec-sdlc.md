@@ -2,6 +2,7 @@
 name: sec-sdlc
 description: "SDLC security review: CIA, Saltzer & Schroeder, SQUARE/STRIDE, SQLi, XSS, brute force, path traversal, CSRF, cryptography, encoding/CSP and logs."
 phase: 1
+agent: sdlc-security-lead
 ---
 
 # /sec-sdlc — Security in the software development lifecycle

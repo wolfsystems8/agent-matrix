@@ -137,6 +137,24 @@ class TestBuild(unittest.TestCase):
         self.assertIn('action: shell\n    resource: "*"\n    effect: allow', sandbox)
         self.assertIn('action: edit\n    resource: "*"\n    effect: allow', writer)
 
+    def test_generated_opencode_commands_wire_orchestrator(self) -> None:
+        files = secmatrix.build_files("core", ["opencode"])
+        for command in secmatrix.load_commands():
+            content = files[f".opencode/commands/{command.name}.md"]
+            if command.agent:
+                self.assertIn(f"agent: {command.agent}", content, command.name)
+                self.assertIn("subagent: true", content, command.name)
+            else:
+                self.assertNotIn("subagent: true", content, command.name)
+
+    def test_opencode_orchestrator_grants_subagents(self) -> None:
+        content = secmatrix.build_files("core", ["opencode"])[
+            ".opencode/agents/audit-program-lead.md"
+        ]
+        self.assertIn("mode: subagent", content)
+        for child in secmatrix.ORCHESTRATOR_SUBAGENTS:
+            self.assertIn(f'action: subagent\n    resource: "{child}"\n    effect: allow', content, child)
+
     def test_validate_passes(self) -> None:
         with contextlib.redirect_stdout(io.StringIO()):
             code = secmatrix.cmd_validate(Namespace())
@@ -170,6 +188,7 @@ class TestInstall(unittest.TestCase):
         self.assertTrue((self.tmp / ".opencode/skills/security-audit-pipeline/SKILL.md").exists())
         self.assertTrue((self.tmp / ".opencode/commands/sec-audit.md").exists())
         self.assertTrue((self.tmp / "reports/README.md").exists())
+        self.assertTrue((self.tmp / "reports/ENGAGEMENT_SCOPE.md").exists())
         self.assertTrue((self.tmp / ".sec-agent-matrix/core/sandbox/.env").exists())
         env = (self.tmp / ".sec-agent-matrix/core/sandbox/.env").read_text(encoding="utf-8")
         # Sin Dockerfile en la raíz se conserva el objetivo de demo del sandbox.

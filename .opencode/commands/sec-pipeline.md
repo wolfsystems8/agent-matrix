@@ -1,5 +1,7 @@
 ---
 description: "Runs the full audit pipeline (systems audit, SDLC, sandbox pentest, optional remediation) with human gates between phases."
+agent: audit-program-lead
+subagent: true
 ---
 
 # /sec-pipeline — Full audit with gates

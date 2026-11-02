@@ -80,7 +80,10 @@ writes to it, and only after an explicit "yes" at the remediation gate.
 9. Invoke `itil-process-auditor` ➔ `reports/ITIL_PROCESS_AUDIT.md`.
 10. Invoke `risk-assessor` ➔ `reports/RISK_REGISTER.md` (ISO 27005), sorted by
     severity.
-11. **Checkpoint (Gate 1):** present the executive summary (count by risk level
+11. **Dependency scan.** Run the dependency scanner over the declared
+    requirements and write `reports/DEPENDENCY_SCAN.md` (date, tool, version,
+    findings). Without a lockfile, record the declared requirements only.
+12. **Checkpoint (Gate 1):** present the executive summary (count by risk level
     and top 5) and require user approval before Phase 2. If the plan marks no
     Phase 2 agent, go straight to the remediation gate.
 
@@ -129,6 +132,11 @@ Steps 2–10 run only if the coverage map marks them `Yes`.
    (`/tmp/opencode/*`, patched copies, ad hoc images).
 4. Update `reports/PIPELINE_STATUS.md` with the close and the report paths.
 5. **Gate:** without this step the pipeline is `blocked`; never `done`.
+
+The final human-facing delivery is a **single unified report**:
+`reports/AUDIT_UNIFIED_REPORT.md`, which consolidates every finding, the
+recommendations and the risk assessment. The phase artifacts remain internal
+working documents.
 
 ## 🔒 Closure and scope control rule
 
@@ -186,6 +194,9 @@ Evidence: <report paths + verification command>
 Teardown: teardown: OK (0 containers / 0 networks / 0 volumes)
 Out of scope: <none | list>
 ```
+
+The closing deliverable is the single unified report with all findings and
+recommendations; phase reports are internal artifacts.
 
 No "next steps" sections or questions that imply new work.
 

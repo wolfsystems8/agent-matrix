@@ -1,5 +1,7 @@
 ---
 description: "Runs Phase 1 (SSDLC) on the repository: threat model, SAST and CVSS triage."
+agent: audit-program-lead
+subagent: true
 ---
 
 # /sec-audit — Static analysis and threat model

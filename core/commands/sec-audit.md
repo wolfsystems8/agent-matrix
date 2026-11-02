@@ -2,6 +2,7 @@
 name: sec-audit
 description: "Runs Phase 1 (SSDLC) on the repository: threat model, SAST and CVSS triage."
 phase: 1
+agent: audit-program-lead
 ---
 
 # /sec-audit — Static analysis and threat model

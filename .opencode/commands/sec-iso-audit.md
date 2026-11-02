@@ -1,5 +1,7 @@
 ---
 description: "ISO 19011 systems audit with ISO 27005 risks, ITIL 4 processes and automatically selected sub-agents."
+agent: audit-program-lead
+subagent: true
 ---
 
 # /sec-iso-audit — Systems audit (ISO 19011)

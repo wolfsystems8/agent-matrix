@@ -2,6 +2,7 @@
 name: sec-task
 description: "Runs a targeted security check: routes the request to only the agents it needs (SQLi, XSS, crypto, logs, ports, risks…)."
 phase: 0
+agent: audit-program-lead
 ---
 
 # /sec-task — Targeted security check

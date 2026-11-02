@@ -185,6 +185,7 @@ class Command:
     phase: int
     body: str
     source: Path
+    agent: str = ""
 
 
 class LoadError(Exception):
@@ -242,6 +243,7 @@ def load_commands() -> list[Command]:
                 phase=int(meta.get("phase", 0)),
                 body=body.strip() + "\n",
                 source=path,
+                agent=str(meta.get("agent", "")).strip(),
             )
         )
     commands.sort(key=lambda c: c.name)
@@ -291,7 +293,9 @@ def render_agent_cursor(agent: Agent, core: str) -> str:
     )
 
 
-def render_agent_opencode(agent: Agent, core: str) -> str:
+def render_agent_opencode(
+    agent: Agent, core: str, subagents: Iterable[str] = ()
+) -> str:
     permissions = [
         ("webfetch", "*", "deny"),
         ("websearch", "*", "deny"),
@@ -309,6 +313,10 @@ def render_agent_opencode(agent: Agent, core: str) -> str:
             permissions.append(("shell", pattern, "allow"))
     else:
         permissions.append(("shell", "*", "allow"))
+    # Los orquestadores lanzan subagentes especializados (mapa de cobertura).
+    # La última regla que coincide gana: permitir solo los hijos declarados.
+    for child in subagents:
+        permissions.append(("subagent", child, "allow"))
 
     lines = [
         "---",
@@ -324,6 +332,32 @@ def render_agent_opencode(agent: Agent, core: str) -> str:
     lines.append("")
     lines.append(render_agent_body(agent, core))
     return "\n".join(lines)
+
+
+# Subagentes que el orquestador `audit-program-lead` puede lanzar según el
+# mapa de cobertura. Solo se emiten permisos `subagent` para los hijos reales.
+ORCHESTRATOR_SUBAGENTS: tuple[str, ...] = (
+    "sdlc-security-lead",
+    "square-requirements",
+    "threat-modeler",
+    "attack-surface-mapper",
+    "sast-auditor",
+    "sqli-analyst",
+    "xss-analyst",
+    "web-vuln-analyst",
+    "crypto-reviewer",
+    "output-encoding-csp-reviewer",
+    "log-auditor",
+    "triage-master",
+    "itil-process-auditor",
+    "risk-assessor",
+    "sandbox-manager",
+    "network-auditor",
+    "web-dast-tester",
+    "exploit-tester",
+    "secfix-patcher",
+    "regression-qa",
+)
 
 
 def render_agent_codex(agent: Agent, core: str) -> str:
@@ -398,12 +432,16 @@ def render_command_claude(command: Command, core: str) -> str:
 
 def render_command_opencode(command: Command, core: str) -> str:
     body = resolve_core(command.body, core)
-    return (
-        "---\n"
-        f"description: {yaml_str(command.description)}\n"
-        "---\n\n"
-        f"{body}"
-    )
+    lines = [
+        "---",
+        f"description: {yaml_str(command.description)}",
+    ]
+    if command.agent:
+        lines.append(f"agent: {command.agent}")
+        lines.append("subagent: true")
+    lines.append("---")
+    lines.append("")
+    return "\n".join(lines) + "\n" + body
 
 
 def render_command_cursor(command: Command, core: str) -> str:
@@ -463,6 +501,9 @@ def build_files(core_prefix: str, tools: Iterable[str]) -> dict[str, str]:
     commands = load_commands()
 
     for agent in agents:
+        subagents: tuple[str, ...] = ()
+        if agent.id == "audit-program-lead":
+            subagents = ORCHESTRATOR_SUBAGENTS
         if "claude" in selected:
             files[f".claude/agents/{agent.id}.md"] = render_agent_claude(agent, core)
         if "cursor" in selected:
@@ -470,7 +511,9 @@ def build_files(core_prefix: str, tools: Iterable[str]) -> dict[str, str]:
         if "codex" in selected:
             files[f".codex/agents/{agent.id}.toml"] = render_agent_codex(agent, core)
         if "opencode" in selected:
-            files[f".opencode/agents/{agent.id}.md"] = render_agent_opencode(agent, core)
+            files[f".opencode/agents/{agent.id}.md"] = render_agent_opencode(
+                agent, core, subagents=subagents
+            )
 
     for skill in skills:
         rendered = render_skill(skill, core)
@@ -727,6 +770,15 @@ def cmd_validate(args: argparse.Namespace) -> int:
         if recorded.get(path) != sha256(content):
             warnings.append(f"manifiesto desactualizado: {path}")
 
+    for path, content in sorted(expected.items()):
+        if not path.startswith(".opencode/agents/"):
+            continue
+        for deprecated in ("tools:", "permission:", "maxSteps:"):
+            if deprecated in content:
+                errors.append(f"adaptador OpenCode con campo V1 deprecado: {path} ({deprecated})")
+        if "mode: subagent" not in content or "permissions:" not in content:
+            errors.append(f"adaptador OpenCode sin mode/permissions V2: {path}")
+
     for path in sorted(recorded):
         if path not in expected and (ROOT / path).exists():
             warnings.append(f"archivo generado obsoleto: {path}")
@@ -853,6 +905,9 @@ def cmd_install(args: argparse.Namespace) -> int:
     readme = ROOT / "reports" / "README.md"
     if readme.exists() and not (reports / "README.md").exists():
         shutil.copy2(readme, reports / "README.md")
+    scope_template = ROOT / "core" / "formatters" / "ENGAGEMENT_SCOPE_TEMPLATE.md"
+    if scope_template.exists() and not (reports / "ENGAGEMENT_SCOPE.md").exists():
+        shutil.copy2(scope_template, reports / "ENGAGEMENT_SCOPE.md")
 
     # 4) Reglas del proyecto (idempotente).
     if not args.no_rules:

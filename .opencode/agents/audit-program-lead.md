@@ -62,6 +62,66 @@ permissions:
   - action: shell
     resource: "bandit *"
     effect: allow
+  - action: subagent
+    resource: "sdlc-security-lead"
+    effect: allow
+  - action: subagent
+    resource: "square-requirements"
+    effect: allow
+  - action: subagent
+    resource: "threat-modeler"
+    effect: allow
+  - action: subagent
+    resource: "attack-surface-mapper"
+    effect: allow
+  - action: subagent
+    resource: "sast-auditor"
+    effect: allow
+  - action: subagent
+    resource: "sqli-analyst"
+    effect: allow
+  - action: subagent
+    resource: "xss-analyst"
+    effect: allow
+  - action: subagent
+    resource: "web-vuln-analyst"
+    effect: allow
+  - action: subagent
+    resource: "crypto-reviewer"
+    effect: allow
+  - action: subagent
+    resource: "output-encoding-csp-reviewer"
+    effect: allow
+  - action: subagent
+    resource: "log-auditor"
+    effect: allow
+  - action: subagent
+    resource: "triage-master"
+    effect: allow
+  - action: subagent
+    resource: "itil-process-auditor"
+    effect: allow
+  - action: subagent
+    resource: "risk-assessor"
+    effect: allow
+  - action: subagent
+    resource: "sandbox-manager"
+    effect: allow
+  - action: subagent
+    resource: "network-auditor"
+    effect: allow
+  - action: subagent
+    resource: "web-dast-tester"
+    effect: allow
+  - action: subagent
+    resource: "exploit-tester"
+    effect: allow
+  - action: subagent
+    resource: "secfix-patcher"
+    effect: allow
+  - action: subagent
+    resource: "regression-qa"
+    effect: allow
 ---
 
 # Role: Lead Systems Auditor (ISO 19011:2018)

@@ -1,5 +1,7 @@
 ---
 description: "Runs Phase 3: patches the findings the user chose to fix and validates with tests and PoCs."
+agent: secfix-patcher
+subagent: true
 ---
 
 # /sec-fix — Remediation and QA

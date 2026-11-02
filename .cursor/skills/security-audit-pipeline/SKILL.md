@@ -63,8 +63,9 @@ gate. Reports and messages go in the user's language.
    - If findings are reopened, repeat up to 3 times; then escalate.
 5. **Mandatory close.** Run `sh core/sandbox/scripts/teardown.sh` and check
    that it prints `teardown: OK` (no containers, networks, volumes or PoC
-   images). Update `PIPELINE_STATUS.md` and deliver a summary with report
-   paths. Without the close, the pipeline is `blocked`, not `done`.
+   images). Update `PIPELINE_STATUS.md` and deliver the single unified report
+   with all findings and recommendations. Without the close, the pipeline is
+   `blocked`, not `done`.
 
 ## Rules
 
@@ -86,6 +87,8 @@ gate. Reports and messages go in the user's language.
 ## Output
 
 `reports/` with: `ENGAGEMENT_SCOPE.md`, `AUDIT_PLAN.md`, Phase 1 reports,
-`AUDIT_REPORT.md`, `RISK_REGISTER.md`, Phase 2 reports,
+`AUDIT_UNIFIED_REPORT.md` (single unified report: all findings, recommendations
+and risk assessment), `RISK_REGISTER.md`, Phase 2 reports,
 `ISO19011_AUDIT_REPORT.md`, `REMEDIATION_SUMMARY.md` (if "yes"),
-`PIPELINE_STATUS.md`.
+`PIPELINE_STATUS.md`. Phase artifacts are internal; the unified report is the
+final human-facing delivery.

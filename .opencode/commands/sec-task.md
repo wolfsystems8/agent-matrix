@@ -1,5 +1,7 @@
 ---
 description: "Runs a targeted security check: routes the request to only the agents it needs (SQLi, XSS, crypto, logs, ports, risks…)."
+agent: audit-program-lead
+subagent: true
 ---
 
 # /sec-task — Targeted security check

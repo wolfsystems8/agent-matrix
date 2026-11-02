@@ -47,8 +47,9 @@ improvement recommendations, written in the user's language.
 5. **Phase 2 (if approved).** Run the Phase 2 agents marked `Yes` via
    `sandbox-pentest`. Then invoke `risk-assessor` again to move verified risks
    to `Confirmed`.
-6. **Report.** Delegate to `audit-program-lead` (close mode) →
-   `reports/ISO19011_AUDIT_REPORT.md`.
+6. **Report.** Delegate to `audit-program-lead` (close mode) → the single
+   unified report (`AUDIT_UNIFIED_REPORT.md`) consolidating all findings,
+   recommendations and risk assessment.
 7. **Remediation gate.** Show the recommendations by severity from
    `RISK_REGISTER.md` and ask, in the user's language:
    **"Do you want to fix the vulnerabilities found? (yes/no)"**
@@ -64,10 +65,10 @@ improvement recommendations, written in the user's language.
 | File | Agent |
 |------|-------|
 | `AUDIT_PLAN.md` | `audit-program-lead` |
-| `SDLC_SECURITY_REVIEW.md`, `THREAT_MODEL.md`, `SAST_RAW_FINDINGS.md`, specialist reports, `AUDIT_REPORT.md` | Technical Phase 1 |
+| `SDLC_SECURITY_REVIEW.md`, `THREAT_MODEL.md`, `SAST_RAW_FINDINGS.md`, specialist reports | Technical Phase 1 |
+| `AUDIT_UNIFIED_REPORT.md` | `audit-program-lead` (final unified delivery) |
 | `ITIL_PROCESS_AUDIT.md` | `itil-process-auditor` |
 | `RISK_REGISTER.md` | `risk-assessor` |
-| `ISO19011_AUDIT_REPORT.md` | `audit-program-lead` |
 
 ## Rules
 

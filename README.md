@@ -95,7 +95,9 @@ están en el repositorio.
 cp core/formatters/ENGAGEMENT_SCOPE_TEMPLATE.md reports/ENGAGEMENT_SCOPE.md
 ```
 
-Sin alcance escrito ningún agente ejecuta pruebas dinámicas.
+`sec-agent-matrix install` copia automáticamente esa plantilla en el destino
+(`reports/ENGAGEMENT_SCOPE.md`). Sin alcance escrito ningún agente ejecuta
+pruebas dinámicas.
 
 ### 3. Lanza la auditoría
 
@@ -112,6 +114,17 @@ Sin alcance escrito ningún agente ejecuta pruebas dinámicas.
 | Auditoría de sistemas | `/sec-iso-audit` | ISO 19011 de inicio a seguimiento, riesgos ISO 27005 ordenados por severidad, procesos ITIL 4 |
 | Seguridad en el SDLC | `/sec-sdlc` | CIA, Saltzer & Schroeder, SQUARE/STRIDE, SQLi, XSS, fuerza bruta, path traversal, CSRF, cripto, encoding/CSP, logs |
 | Completo | `/sec-pipeline` | Ambos ciclos + pentest en sandbox + gate "¿corregir? sí/no" |
+
+El entregable final de cada auditoría es el **informe unificado**
+`reports/AUDIT_UNIFIED_REPORT.md`: consolida todos los hallazgos, los falsos
+positivos descartados, las recomendaciones y el registro de riesgos. Los
+artefactos por fase son documentos internos de trabajo.
+
+### Dependencia y entregable
+
+La fase 1 incluye un paso de escaneo de dependencias que escribe
+`reports/DEPENDENCY_SCAN.md` (fecha, herramienta, versión y hallazgos). La
+condición de cierre exige ese escaneo junto con el resto de las condiciones.
 
 ## 📥 Usarlo en otro proyecto
 
@@ -145,6 +158,12 @@ Carga las 19 skills en cualquier proyecto desde
 
 Los agentes y comandos siguen siendo por proyecto, porque referencian `core/...`
 y `reports/` del repositorio auditado.
+
+En OpenCode, los comandos `/sec-*` generados se enlazan con el subagente
+orquestador mediante frontmatter `agent: <orquestador>` + `subagent: true`, y
+el orquestador recibe permisos `subagent` para lanzar a los especialistas. En
+Claude Code los comandos se ejecutan como slash commands con delegación a los
+subagentes; en Codex no existen comandos y se usan las skills.
 
 ## 🏗️ Arquitectura
 

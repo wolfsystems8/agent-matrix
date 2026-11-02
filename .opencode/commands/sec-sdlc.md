@@ -1,5 +1,7 @@
 ---
 description: "SDLC security review: CIA, Saltzer & Schroeder, SQUARE/STRIDE, SQLi, XSS, brute force, path traversal, CSRF, cryptography, encoding/CSP and logs."
+agent: sdlc-security-lead
+subagent: true
 ---
 
 # /sec-sdlc — Security in the software development lifecycle

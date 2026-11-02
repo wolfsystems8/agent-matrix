@@ -2,6 +2,7 @@
 name: sec-pipeline
 description: "Runs the full audit pipeline (systems audit, SDLC, sandbox pentest, optional remediation) with human gates between phases."
 phase: 0
+agent: audit-program-lead
 ---
 
 # /sec-pipeline — Full audit with gates

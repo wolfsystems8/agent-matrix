@@ -2,6 +2,7 @@
 name: sec-iso-audit
 description: "ISO 19011 systems audit with ISO 27005 risks, ITIL 4 processes and automatically selected sub-agents."
 phase: 1
+agent: audit-program-lead
 ---
 
 # /sec-iso-audit — Systems audit (ISO 19011)
